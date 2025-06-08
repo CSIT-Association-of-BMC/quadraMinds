@@ -15,7 +15,6 @@ class _HospitalScreenState extends State<HospitalScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  String _selectedCity = 'All';
   String _searchQuery = '';
   String _sortBy = 'distance'; // distance, rating, name
   bool _showFavoritesOnly = false;
@@ -306,12 +305,6 @@ class _HospitalScreenState extends State<HospitalScreen>
   List<HospitalInfo> get _filteredHospitals {
     List<HospitalInfo> filtered = _hospitals;
 
-    // Filter by city
-    if (_selectedCity != 'All') {
-      filtered =
-          filtered.where((hospital) => hospital.city == _selectedCity).toList();
-    }
-
     // Filter by search query
     if (_searchQuery.isNotEmpty) {
       filtered =
@@ -378,10 +371,10 @@ class _HospitalScreenState extends State<HospitalScreen>
   Widget _buildHeader() {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
-        left: 16,
-        right: 16,
-        bottom: 16,
+        top: MediaQuery.of(context).padding.top + 20,
+        left: 20,
+        right: 20,
+        bottom: 24,
       ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -408,7 +401,7 @@ class _HospitalScreenState extends State<HospitalScreen>
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -416,16 +409,16 @@ class _HospitalScreenState extends State<HospitalScreen>
                   child: const Icon(
                     Icons.arrow_back,
                     color: Colors.white,
-                    size: 18,
+                    size: 20,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               const Expanded(
                 child: Text(
                   'Hospitals',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: 0.5,
@@ -437,7 +430,7 @@ class _HospitalScreenState extends State<HospitalScreen>
                   GestureDetector(
                     onTap: () => _showSortDialog(),
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
@@ -445,7 +438,7 @@ class _HospitalScreenState extends State<HospitalScreen>
                       child: const Icon(
                         Icons.sort,
                         color: Colors.white,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -457,7 +450,7 @@ class _HospitalScreenState extends State<HospitalScreen>
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color:
                             _showFavoritesOnly
@@ -471,7 +464,7 @@ class _HospitalScreenState extends State<HospitalScreen>
                             _showFavoritesOnly
                                 ? const Color(0xFF1E40AF)
                                 : Colors.white,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -479,10 +472,8 @@ class _HospitalScreenState extends State<HospitalScreen>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildSearchBar(),
-          const SizedBox(height: 12),
-          _buildCityFilter(),
         ],
       ),
     );
@@ -538,56 +529,6 @@ class _HospitalScreenState extends State<HospitalScreen>
             vertical: 12,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCityFilter() {
-    final cities = ['All', 'Butwal', 'Kathmandu'];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children:
-            cities.map((city) {
-              final isSelected = _selectedCity == city;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedCity = city;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color:
-                          isSelected
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    city,
-                    style: TextStyle(
-                      color:
-                          isSelected ? const Color(0xFF1E40AF) : Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
       ),
     );
   }
