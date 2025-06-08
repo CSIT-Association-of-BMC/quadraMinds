@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/user_models.dart';
+import '../../services/auth_service.dart';
+import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+import 'help_center_screen.dart';
+import 'feedback_screen.dart';
 
 class ProfileClientScreen extends StatefulWidget {
   final ClientUser clientUser;
@@ -16,6 +21,7 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -329,10 +335,10 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
             iconBgColor: const Color(0xFF4ECDC4).withValues(alpha: 0.1),
             title: 'Help Center',
             onTap: () {
-              // TODO: Navigate to help center
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Help Center feature coming soon'),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HelpCenterScreen(),
                 ),
               );
             },
@@ -343,14 +349,7 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
             iconColor: const Color(0xFF667EEA),
             iconBgColor: const Color(0xFF667EEA).withValues(alpha: 0.1),
             title: 'Contact Support',
-            onTap: () {
-              // TODO: Navigate to contact support
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Contact Support feature coming soon'),
-                ),
-              );
-            },
+            onTap: () => _contactSupport(),
           ),
           _buildDivider(),
           _buildSettingsItem(
@@ -359,11 +358,9 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
             iconBgColor: const Color(0xFF8B5FBF).withValues(alpha: 0.1),
             title: 'Send Feedback',
             onTap: () {
-              // TODO: Navigate to feedback screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Send Feedback feature coming soon'),
-                ),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FeedbackScreen()),
               );
             },
           ),
@@ -373,14 +370,7 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
             iconColor: const Color(0xFFFFD93D),
             iconBgColor: const Color(0xFFFFD93D).withValues(alpha: 0.1),
             title: 'Rate the App',
-            onTap: () {
-              // TODO: Navigate to app rating
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Rate the App feature coming soon'),
-                ),
-              );
-            },
+            onTap: () => _rateApp(),
           ),
         ],
       ),
@@ -510,13 +500,7 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Implement account deletion
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Account deletion feature coming soon'),
-                    backgroundColor: Color(0xFFFF6B6B),
-                  ),
-                );
+                _deleteAccount();
               },
               child: const Text(
                 'Delete',
@@ -562,12 +546,7 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Implement sign out functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sign out functionality coming soon'),
-                  ),
-                );
+                _performSignOut();
               },
               child: const Text(
                 'Sign Out',
@@ -581,5 +560,408 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
         );
       },
     );
+  }
+
+  // Contact Support functionality
+  Future<void> _contactSupport() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  const Text(
+                    'Contact Support',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Choose how you\'d like to contact our support team',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Contact options
+                  _buildContactOption(
+                    icon: Icons.email_outlined,
+                    title: 'Email Support',
+                    subtitle: 'support@swasthyasetu.com',
+                    color: const Color(0xFF667EEA),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _sendSupportEmail();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildContactOption(
+                    icon: Icons.phone_outlined,
+                    title: 'Call Support',
+                    subtitle: '+1-800-HEALTH (24/7)',
+                    color: const Color(0xFF4ECDC4),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _callSupport();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildContactOption(
+                    icon: Icons.chat_outlined,
+                    title: 'Live Chat',
+                    subtitle: 'Chat with our team',
+                    color: const Color(0xFF8B5FBF),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showComingSoon('Live Chat');
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildContactOption(
+                    icon: Icons.help_outline,
+                    title: 'Help Center',
+                    subtitle: 'Browse FAQs and guides',
+                    color: const Color(0xFFFFD93D),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpCenterScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildContactOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF666666),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sendSupportEmail() async {
+    try {
+      final Uri emailUri = Uri(
+        scheme: 'mailto',
+        path: 'support@swasthyasetu.com',
+        query:
+            'subject=Support Request - Swasthya Setu App&body=Hello Support Team,%0A%0AI need help with:%0A%0A[Please describe your issue here]%0A%0AUser Details:%0AName: ${widget.clientUser.firstName} ${widget.clientUser.lastName}%0AEmail: ${widget.clientUser.email}%0A%0AThank you!',
+      );
+
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+      } else {
+        // Fallback: Show email details for manual copying
+        _showEmailFallback();
+      }
+    } catch (e) {
+      _showEmailFallback();
+    }
+  }
+
+  Future<void> _callSupport() async {
+    try {
+      final Uri phoneUri = Uri(
+        scheme: 'tel',
+        path: '+18004325844',
+      ); // +1-800-HEALTH
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        _showError(
+          'Could not launch phone dialer. Please call +1-800-HEALTH manually.',
+        );
+      }
+    } catch (e) {
+      _showError(
+        'Could not launch phone dialer. Please call +1-800-HEALTH manually.',
+      );
+    }
+  }
+
+  void _showEmailFallback() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Email Support',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Please send an email to:',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F7FA),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'support@swasthyasetu.com',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF667EEA),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Include your name, email, and a detailed description of your issue.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF666666)),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Got it',
+                  style: TextStyle(
+                    color: Color(0xFF667EEA),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature feature coming soon'),
+        backgroundColor: const Color(0xFF667EEA),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF6B6B),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  // Rate App functionality
+  Future<void> _rateApp() async {
+    // For Android, use Play Store URL
+    // For iOS, use App Store URL
+    // For now, we'll use a generic URL that can be updated later
+    const String playStoreUrl =
+        'https://play.google.com/store/apps/details?id=com.swasthyasetu.app';
+    const String appStoreUrl =
+        'https://apps.apple.com/app/swasthya-setu/id123456789';
+
+    try {
+      // Try Play Store first (can be made platform-specific later)
+      final Uri uri = Uri.parse(playStoreUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch app store';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open app store. Please rate us manually.'),
+            backgroundColor: Color(0xFFFF6B6B),
+          ),
+        );
+      }
+    }
+  }
+
+  // Delete Account functionality
+  Future<void> _deleteAccount() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Delete user account using AuthService
+      await _authService.deleteUserAccount();
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        // Navigate to login screen
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account deleted successfully'),
+            backgroundColor: Color(0xFF4CAF50),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete account: ${e.toString()}'),
+            backgroundColor: const Color(0xFFFF6B6B),
+          ),
+        );
+      }
+    }
+  }
+
+  // Sign Out functionality
+  Future<void> _performSignOut() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Sign out using AuthService
+      await _authService.signOut();
+
+      // Close loading dialog and navigate to login screen
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signed out successfully'),
+            backgroundColor: Color(0xFF4CAF50),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to sign out: ${e.toString()}'),
+            backgroundColor: const Color(0xFFFF6B6B),
+          ),
+        );
+      }
+    }
   }
 }

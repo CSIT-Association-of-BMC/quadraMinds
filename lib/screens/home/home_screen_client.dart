@@ -536,8 +536,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       ),
                       const SizedBox(height: 16),
                       _buildAvailableDoctorsSection(),
-                      const SizedBox(height: 16),
-                      _buildHelpSection(),
                       const SizedBox(height: 80), // Space for bottom nav
                     ],
                   ),
@@ -1034,108 +1032,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  // Enhanced Help section
-  Widget _buildHelpSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Need Help?',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildHelpCard(
-                'FAQ',
-                'Common questions',
-                Icons.quiz,
-                const Color(0xFF8B5CF6),
-                const Color(0xFFF5F3FF),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildHelpCard(
-                '24/7 Support',
-                'Get instant help',
-                Icons.support_agent,
-                const Color(0xFF06B6D4),
-                const Color(0xFFF0F9FF),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHelpCard(
-    String title,
-    String subtitle,
-    IconData icon,
-    Color iconColor,
-    Color backgroundColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: iconColor.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 16),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: iconColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                'Learn More',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: iconColor,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(Icons.arrow_forward, color: iconColor, size: 12),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBottomNavigation() {
     return Container(
       padding: EdgeInsets.only(
@@ -1162,6 +1058,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildBottomNavItem(Icons.home_filled, 'Home', 0),
+          _buildBottomNavItem(Icons.biotech, 'Lab Tests', 1),
           // Enhanced Emergency button
           Container(
             width: 42,
@@ -1183,8 +1080,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             ),
             child: const Icon(Icons.emergency, color: Colors.white, size: 18),
           ),
-          _buildBottomNavItem(Icons.receipt_long, 'Records', 2),
-          _buildBottomNavItem(Icons.person, 'Profile', 3),
+          _buildBottomNavItem(Icons.receipt_long, 'Records', 3),
+          _buildBottomNavItem(Icons.person, 'Profile', 4),
         ],
       ),
     );
@@ -1195,12 +1092,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return GestureDetector(
       onTap: () {
         if (index == 1) {
-          // Hospital tab
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HospitalScreen()),
-          );
-        } else if (index == 3) {
+          // Lab Tests tab
+          _showLabTestOptions();
+        } else if (index == 4) {
           // Profile tab
           if (widget.clientUser != null) {
             Navigator.push(
@@ -1260,6 +1154,142 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Show lab test options dialog
+  void _showLabTestOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Lab Tests',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLabTestOption(
+                'Blood Test',
+                'Complete blood count and analysis',
+                Icons.bloodtype,
+                const Color(0xFFDC2626),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'Urine Test',
+                'Comprehensive urine analysis',
+                Icons.science,
+                const Color(0xFF7C3AED),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'X-Ray',
+                'Digital X-ray imaging',
+                Icons.medical_services,
+                const Color(0xFF059669),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'ECG',
+                'Electrocardiogram test',
+                Icons.monitor_heart,
+                const Color(0xFFEA580C),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  color: Color(0xFF667EEA),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLabTestOption(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title booking feature coming soon!'),
+            backgroundColor: color,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
           ],
         ),
       ),
