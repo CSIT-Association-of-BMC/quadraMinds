@@ -36,6 +36,10 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   Timer? _carouselTimer;
   bool _isUserInteracting = false;
 
+  // For unlimited circular carousel
+  static const int _carouselItemCount = 4; // Actual number of carousel items
+  late List<Map<String, dynamic>> _infiniteCarouselItems;
+
   @override
   void initState() {
     super.initState();
@@ -48,8 +52,14 @@ class _HomeScreenClientState extends State<HomeScreenClient>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    // Initialize PageController for carousel
-    _pageController = PageController(viewportFraction: 0.85);
+    // Initialize infinite carousel items (duplicate items for seamless scrolling)
+    _initializeInfiniteCarousel();
+
+    // Initialize PageController for unlimited circular carousel
+    _pageController = PageController(
+      viewportFraction: 0.85,
+      initialPage: _carouselItemCount, // Start from the first "real" item
+    );
 
     _animationController.forward();
     _getCurrentLocation(); // Get location on startup
@@ -236,16 +246,69 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return 'Mr. Guest';
   }
 
+  // Initialize infinite carousel with duplicated items for seamless scrolling
+  void _initializeInfiniteCarousel() {
+    final originalItems = [
+      {
+        'title': 'Emergency Care 24/7',
+        'subtitle': 'Immediate medical assistance available round the clock',
+        'icon': Icons.emergency,
+        'color': const Color(0xFFDC2626),
+        'backgroundColor': const Color(0xFFFEF2F2),
+      },
+      {
+        'title': 'Book Lab Tests',
+        'subtitle': 'Schedule your health checkups and diagnostic tests',
+        'icon': Icons.science,
+        'color': const Color(0xFF7C3AED),
+        'backgroundColor': const Color(0xFFF5F3FF),
+      },
+      {
+        'title': 'Find Nearby Pharmacy',
+        'subtitle': 'Locate pharmacies and order medicines online',
+        'icon': Icons.local_pharmacy,
+        'color': const Color(0xFF4ECDC4),
+        'backgroundColor': const Color(0xFFF0FDFC),
+      },
+      {
+        'title': 'Ambulance Service',
+        'subtitle': 'Quick ambulance booking for medical emergencies',
+        'icon': Icons.local_hospital,
+        'color': const Color(0xFFEA580C),
+        'backgroundColor': const Color(0xFFFFF7ED),
+      },
+    ];
+
+    // Create infinite list: [last, ...original, first] for seamless scrolling
+    _infiniteCarouselItems = [
+      ...originalItems.sublist(
+        originalItems.length - 1,
+      ), // Last item at beginning
+      ...originalItems, // Original items
+      ...originalItems.sublist(0, 1), // First item at end
+    ];
+  }
+
   // Carousel timer methods
   void _startCarouselTimer() {
     _carouselTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!_isUserInteracting && _pageController != null) {
-        final nextIndex = (_currentCarouselIndex + 1) % 4; // 4 carousel items
-        _pageController!.animateToPage(
-          nextIndex,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
+      if (!_isUserInteracting &&
+          _pageController != null &&
+          _pageController!.hasClients) {
+        final currentPage = _pageController!.page?.round() ?? 1;
+        final nextPage = currentPage + 1;
+
+        // Check if we need to handle the infinite loop
+        if (nextPage >= _infiniteCarouselItems.length) {
+          // Jump to the beginning (after the duplicate last item)
+          _pageController!.jumpToPage(1);
+        } else {
+          _pageController!.animateToPage(
+            nextPage,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
       }
     });
   }
@@ -271,6 +334,37 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   void _onCarouselInteractionEnd() {
     _isUserInteracting = false;
     _restartCarouselTimer();
+  }
+
+  // Handle page changes and implement seamless infinite scrolling
+  void _handlePageChanged(int index) {
+    // Update the current index for dot indicators
+    if (index == 0) {
+      // If we're at the duplicate last item (index 0), jump to the real last item
+      setState(() {
+        _currentCarouselIndex = _carouselItemCount - 1;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController != null && _pageController!.hasClients) {
+          _pageController!.jumpToPage(_carouselItemCount);
+        }
+      });
+    } else if (index == _infiniteCarouselItems.length - 1) {
+      // If we're at the duplicate first item (last index), jump to the real first item
+      setState(() {
+        _currentCarouselIndex = 0;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController != null && _pageController!.hasClients) {
+          _pageController!.jumpToPage(1);
+        }
+      });
+    } else {
+      // Normal case: update the index
+      setState(() {
+        _currentCarouselIndex = (index - 1) % _carouselItemCount;
+      });
+    }
   }
 
   @override
@@ -442,8 +536,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       ),
                       const SizedBox(height: 16),
                       _buildAvailableDoctorsSection(),
-                      const SizedBox(height: 16),
-                      _buildHelpSection(),
                       const SizedBox(height: 80), // Space for bottom nav
                     ],
                   ),
@@ -459,37 +551,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
 
   // Carousel Slider
   Widget _buildCarouselSlider() {
-    final List<Map<String, dynamic>> carouselItems = [
-      {
-        'title': 'Emergency Care 24/7',
-        'subtitle': 'Immediate medical assistance available round the clock',
-        'icon': Icons.emergency,
-        'color': const Color(0xFFDC2626),
-        'backgroundColor': const Color(0xFFFEF2F2),
-      },
-      {
-        'title': 'Book Lab Tests',
-        'subtitle': 'Schedule your health checkups and diagnostic tests',
-        'icon': Icons.science,
-        'color': const Color(0xFF7C3AED),
-        'backgroundColor': const Color(0xFFF5F3FF),
-      },
-      {
-        'title': 'Find Nearby Pharmacy',
-        'subtitle': 'Locate pharmacies and order medicines online',
-        'icon': Icons.local_pharmacy,
-        'color': const Color(0xFF4ECDC4),
-        'backgroundColor': const Color(0xFFF0FDFC),
-      },
-      {
-        'title': 'Ambulance Service',
-        'subtitle': 'Quick ambulance booking for medical emergencies',
-        'icon': Icons.local_hospital,
-        'color': const Color(0xFFEA580C),
-        'backgroundColor': const Color(0xFFFFF7ED),
-      },
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -514,13 +575,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: (index) {
-                setState(() {
-                  _currentCarouselIndex = index;
-                });
+                _handlePageChanged(index);
               },
-              itemCount: carouselItems.length,
+              itemCount: _infiniteCarouselItems.length,
               itemBuilder: (context, index) {
-                final item = carouselItems[index];
+                final item = _infiniteCarouselItems[index];
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 5.0),
                   child: _buildCarouselCard(
@@ -539,21 +598,20 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         // Dot indicators
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children:
-              carouselItems.asMap().entries.map((entry) {
-                return Container(
-                  width: 6.0,
-                  height: 6.0,
-                  margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color:
-                        _currentCarouselIndex == entry.key
-                            ? const Color(0xFF667EEA)
-                            : const Color(0xFFE5E7EB),
-                  ),
-                );
-              }).toList(),
+          children: List.generate(_carouselItemCount, (index) {
+            return Container(
+              width: 6.0,
+              height: 6.0,
+              margin: const EdgeInsets.symmetric(horizontal: 2.5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    _currentCarouselIndex == index
+                        ? const Color(0xFF667EEA)
+                        : const Color(0xFFE5E7EB),
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -974,108 +1032,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  // Enhanced Help section
-  Widget _buildHelpSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Need Help?',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
-            letterSpacing: 0.3,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildHelpCard(
-                'FAQ',
-                'Common questions',
-                Icons.quiz,
-                const Color(0xFF8B5CF6),
-                const Color(0xFFF5F3FF),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildHelpCard(
-                '24/7 Support',
-                'Get instant help',
-                Icons.support_agent,
-                const Color(0xFF06B6D4),
-                const Color(0xFFF0F9FF),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHelpCard(
-    String title,
-    String subtitle,
-    IconData icon,
-    Color iconColor,
-    Color backgroundColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: iconColor.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 16),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: iconColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                'Learn More',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: iconColor,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(Icons.arrow_forward, color: iconColor, size: 12),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBottomNavigation() {
     return Container(
       padding: EdgeInsets.only(
@@ -1102,6 +1058,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildBottomNavItem(Icons.home_filled, 'Home', 0),
+          _buildBottomNavItem(Icons.biotech, 'Lab Tests', 1),
           // Enhanced Emergency button
           Container(
             width: 42,
@@ -1123,8 +1080,8 @@ class _HomeScreenClientState extends State<HomeScreenClient>
             ),
             child: const Icon(Icons.emergency, color: Colors.white, size: 18),
           ),
-          _buildBottomNavItem(Icons.receipt_long, 'Records', 2),
-          _buildBottomNavItem(Icons.person, 'Profile', 3),
+          _buildBottomNavItem(Icons.receipt_long, 'Records', 3),
+          _buildBottomNavItem(Icons.person, 'Profile', 4),
         ],
       ),
     );
@@ -1135,12 +1092,9 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     return GestureDetector(
       onTap: () {
         if (index == 1) {
-          // Hospital tab
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HospitalScreen()),
-          );
-        } else if (index == 3) {
+          // Lab Tests tab
+          _showLabTestOptions();
+        } else if (index == 4) {
           // Profile tab
           if (widget.clientUser != null) {
             Navigator.push(
@@ -1200,6 +1154,142 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Show lab test options dialog
+  void _showLabTestOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Lab Tests',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLabTestOption(
+                'Blood Test',
+                'Complete blood count and analysis',
+                Icons.bloodtype,
+                const Color(0xFFDC2626),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'Urine Test',
+                'Comprehensive urine analysis',
+                Icons.science,
+                const Color(0xFF7C3AED),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'X-Ray',
+                'Digital X-ray imaging',
+                Icons.medical_services,
+                const Color(0xFF059669),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'ECG',
+                'Electrocardiogram test',
+                Icons.monitor_heart,
+                const Color(0xFFEA580C),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  color: Color(0xFF667EEA),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLabTestOption(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title booking feature coming soon!'),
+            backgroundColor: color,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
           ],
         ),
       ),
