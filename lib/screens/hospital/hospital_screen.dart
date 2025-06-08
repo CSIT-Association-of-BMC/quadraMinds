@@ -15,7 +15,6 @@ class _HospitalScreenState extends State<HospitalScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  String _selectedCity = 'All';
   String _searchQuery = '';
   String _sortBy = 'distance'; // distance, rating, name
   bool _showFavoritesOnly = false;
@@ -306,12 +305,6 @@ class _HospitalScreenState extends State<HospitalScreen>
   List<HospitalInfo> get _filteredHospitals {
     List<HospitalInfo> filtered = _hospitals;
 
-    // Filter by city
-    if (_selectedCity != 'All') {
-      filtered =
-          filtered.where((hospital) => hospital.city == _selectedCity).toList();
-    }
-
     // Filter by search query
     if (_searchQuery.isNotEmpty) {
       filtered =
@@ -481,8 +474,6 @@ class _HospitalScreenState extends State<HospitalScreen>
           ),
           const SizedBox(height: 16),
           _buildSearchBar(),
-          const SizedBox(height: 12),
-          _buildCityFilter(),
         ],
       ),
     );
@@ -538,56 +529,6 @@ class _HospitalScreenState extends State<HospitalScreen>
             vertical: 12,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCityFilter() {
-    final cities = ['All', 'Butwal', 'Kathmandu'];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children:
-            cities.map((city) {
-              final isSelected = _selectedCity == city;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedCity = city;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color:
-                          isSelected
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    city,
-                    style: TextStyle(
-                      color:
-                          isSelected ? const Color(0xFF1E40AF) : Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
       ),
     );
   }
