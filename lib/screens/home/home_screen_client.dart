@@ -405,9 +405,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  // Search Bar
-                  _buildSearchBar(),
                 ],
               ),
             ),
@@ -458,47 +455,6 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         ),
       ),
       bottomNavigationBar: _buildBottomNavigation(),
-    );
-  }
-
-  // Professional Search Bar
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search doctors, hospitals, services...',
-          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Color(0xFF6B7280),
-            size: 18,
-          ),
-          suffixIcon: Container(
-            margin: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF667EEA),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(Icons.tune, color: Colors.white, size: 16),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-        ),
-      ),
     );
   }
 
