@@ -57,49 +57,50 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
           'Change Password',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: const Color(0xFF1565C0),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
-              ),
-            )
-          : FadeTransition(
-              opacity: _fadeAnimation,
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width * 0.05,
-                    vertical: 24,
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header Section
-                        _buildHeaderSection(),
-                        const SizedBox(height: 32),
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1565C0)),
+                ),
+              )
+              : FadeTransition(
+                opacity: _fadeAnimation,
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width * 0.05,
+                      vertical: 24,
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header Section
+                          _buildHeaderSection(),
+                          const SizedBox(height: 32),
 
-                        // Password Form
-                        _buildPasswordForm(),
-                        const SizedBox(height: 32),
+                          // Password Form
+                          _buildPasswordForm(),
+                          const SizedBox(height: 32),
 
-                        // Change Password Button
-                        _buildChangePasswordButton(),
-                        const SizedBox(height: 16),
+                          // Change Password Button
+                          _buildChangePasswordButton(),
+                          const SizedBox(height: 16),
 
-                        // Security Tips
-                        _buildSecurityTips(),
-                      ],
+                          // Security Tips
+                          _buildSecurityTips(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
     );
   }
 
@@ -123,12 +124,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+              color: const Color(0xFF1565C0).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.lock_outline,
-              color: Color(0xFF2E7D32),
+              color: Color(0xFF1565C0),
               size: 30,
             ),
           ),
@@ -148,10 +149,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
                 const SizedBox(height: 4),
                 Text(
                   'Keep your account secure with a strong password',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -255,7 +253,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
         labelStyle: const TextStyle(fontSize: 14),
         prefixIcon: const Icon(
           Icons.lock_outline,
-          color: Color(0xFF2E7D32),
+          color: Color(0xFF1565C0),
           size: 20,
         ),
         suffixIcon: IconButton(
@@ -277,7 +275,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+          borderSide: const BorderSide(color: Color(0xFF1565C0)),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -298,20 +296,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleChangePassword,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2E7D32),
+          backgroundColor: const Color(0xFF1565C0),
           foregroundColor: Colors.white,
           elevation: 2,
-          shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+          shadowColor: const Color(0xFF1565C0).withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: const Text(
           'Change Password',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -321,10 +316,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E7D32).withValues(alpha: 0.05),
+        color: const Color(0xFF1565C0).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF2E7D32).withValues(alpha: 0.2),
+          color: const Color(0xFF1565C0).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -332,18 +327,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
         children: [
           Row(
             children: [
-              Icon(
-                Icons.security,
-                color: const Color(0xFF2E7D32),
-                size: 20,
-              ),
+              Icon(Icons.security, color: const Color(0xFF1565C0), size: 20),
               const SizedBox(width: 8),
               const Text(
                 'Security Tips',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2E7D32),
+                  color: Color(0xFF1565C0),
                 ),
               ),
             ],
@@ -389,7 +380,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Password changed successfully!'),
-              backgroundColor: Color(0xFF2E7D32),
+              backgroundColor: Color(0xFF1565C0),
               behavior: SnackBarBehavior.floating,
             ),
           );
