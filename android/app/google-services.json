@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "403647213215",
+    "project_id": "swasthya-setu-3dc5e",
+    "storage_bucket": "swasthya-setu-3dc5e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:403647213215:android:1763b0c42014ce8f687caa",
+        "android_client_info": {
+          "package_name": "com.example.swasthya_setu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVgYPDRkB8WrNzsALqVGd_ZpHSHuMGYEE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
