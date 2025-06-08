@@ -6,6 +6,7 @@ import '../../models/user_models.dart';
 import '../hospital/hospital_screen.dart';
 import '../appointment/your_appointment.dart';
 import '../profile_client/profile_client_screen.dart';
+import '../client_doctor/doctor_client.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/hospital_doctor_selection_card.dart';
 
@@ -430,7 +431,14 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             ),
                           );
                         },
-                        onDoctorTap: null, // Removed doctor navigation
+                        onDoctorTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DoctorClientScreen(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
                       _buildAvailableDoctorsSection(),
