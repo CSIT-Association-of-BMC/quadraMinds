@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../models/user_models.dart';
 import '../hospital/hospital_screen.dart';
-import '../appointment/appointment_booking_screen.dart';
 import '../appointment/your_appointment.dart';
 import '../profile_client/profile_client_screen.dart';
 import '../../utils/page_transitions.dart';
@@ -431,15 +430,7 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                             ),
                           );
                         },
-                        onDoctorTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => const AppointmentBookingScreen(),
-                            ),
-                          );
-                        },
+                        onDoctorTap: null, // Removed doctor navigation
                       ),
                       const SizedBox(height: 16),
                       _buildAvailableDoctorsSection(),
