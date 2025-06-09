@@ -105,10 +105,28 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (mounted) {
           if (result['success']) {
-            debugPrint('LoginScreen: Login successful, getting user type...');
-            // Get user type from Firestore
-            final userType = await _authService.getUserType(result['user'].uid);
-            debugPrint('LoginScreen: User type: $userType');
+            debugPrint('LoginScreen: Login successful, detecting user type...');
+            // Enhanced user type detection using email-based detection
+            final userEmail =
+                result['user'].email ?? _emailController.text.trim();
+            var userType = await _authService.detectUserTypeFromEmail(
+              userEmail,
+            );
+            debugPrint('LoginScreen: Detected user type: ${userType?.name}');
+
+            // Fallback to stored user type if detection fails
+            if (userType == null) {
+              userType = await _authService.getUserType(result['user'].uid);
+              debugPrint(
+                'LoginScreen: Fallback user type from storage: $userType',
+              );
+            }
+
+            // Final fallback to client if still null
+            if (userType == null) {
+              debugPrint('LoginScreen: Defaulting to client user type');
+              userType = UserType.client;
+            }
 
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(

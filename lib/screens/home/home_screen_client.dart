@@ -7,6 +7,7 @@ import '../hospital/hospital_screen.dart';
 import '../appointment/your_appointment.dart';
 import '../profile_client/profile_client_screen.dart';
 import '../client_doctor/doctor_client.dart';
+import '../client_records/client_records_screen.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/hospital_doctor_selection_card.dart';
 import '../../widgets/floating_ai_assistant.dart';
@@ -40,6 +41,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   // For unlimited circular carousel
   static const int _carouselItemCount = 4; // Actual number of carousel items
   late List<Map<String, dynamic>> _infiniteCarouselItems;
+
+  // Keys for measuring restricted areas for AI assistant
+  final GlobalKey _healthcareServicesKey = GlobalKey();
+  final GlobalKey _availableServicesKey = GlobalKey();
+  final GlobalKey _availableDoctorsKey = GlobalKey();
 
   @override
   void initState() {
@@ -368,6 +374,50 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     }
   }
 
+  // Calculate restricted bounds for AI assistant
+  Map<String, double?> _calculateRestrictedBounds() {
+    try {
+      double? topBound;
+      double? bottomBound;
+
+      // Get the render boxes for the key sections
+      final healthcareServicesBox =
+          _healthcareServicesKey.currentContext?.findRenderObject()
+              as RenderBox?;
+      final availableDoctorsBox =
+          _availableDoctorsKey.currentContext?.findRenderObject() as RenderBox?;
+
+      if (healthcareServicesBox != null && healthcareServicesBox.hasSize) {
+        final position = healthcareServicesBox.localToGlobal(Offset.zero);
+        topBound = position.dy;
+      }
+
+      if (availableDoctorsBox != null && availableDoctorsBox.hasSize) {
+        final position = availableDoctorsBox.localToGlobal(Offset.zero);
+        final size = availableDoctorsBox.size;
+        bottomBound = position.dy + size.height;
+      }
+
+      return {
+        'top': topBound ?? 100.0, // Fallback to safe top position
+        'bottom':
+            bottomBound ??
+            MediaQuery.of(context).size.height -
+                100.0, // Fallback to safe bottom
+        'left': 16.0, // Match the padding of the main content
+        'right': MediaQuery.of(context).size.width - 16.0, // Match the padding
+      };
+    } catch (e) {
+      // Fallback to safe bounds if any error occurs
+      return {
+        'top': 100.0,
+        'bottom': MediaQuery.of(context).size.height - 100.0,
+        'left': 16.0,
+        'right': MediaQuery.of(context).size.width - 16.0,
+      };
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -515,31 +565,41 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildCarouselSlider(),
+                          Container(
+                            key: _healthcareServicesKey,
+                            child: _buildCarouselSlider(),
+                          ),
                           const SizedBox(height: 16),
                           _buildBookAppointmentCard(),
                           const SizedBox(height: 16),
-                          HospitalDoctorSelectionCard(
-                            onHospitalTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HospitalScreen(),
-                                ),
-                              );
-                            },
-                            onDoctorTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => const DoctorClientScreen(),
-                                ),
-                              );
-                            },
+                          Container(
+                            key: _availableServicesKey,
+                            child: HospitalDoctorSelectionCard(
+                              onHospitalTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const HospitalScreen(),
+                                  ),
+                                );
+                              },
+                              onDoctorTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const DoctorClientScreen(),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          _buildAvailableDoctorsSection(),
+                          Container(
+                            key: _availableDoctorsKey,
+                            child: _buildAvailableDoctorsSection(),
+                          ),
                           const SizedBox(height: 80), // Space for bottom nav
                         ],
                       ),
@@ -549,8 +609,18 @@ class _HomeScreenClientState extends State<HomeScreenClient>
               ],
             ),
           ),
-          // Meta AI-style Floating Assistant Icon
-          const FloatingAIAssistant(),
+          // Floating Assistant Icon with restricted area
+          Builder(
+            builder: (context) {
+              final bounds = _calculateRestrictedBounds();
+              return FloatingAIAssistant(
+                restrictedTop: bounds['top'],
+                restrictedBottom: bounds['bottom'],
+                restrictedLeft: bounds['left'],
+                restrictedRight: bounds['right'],
+              );
+            },
+          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigation(),
@@ -1102,6 +1172,24 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         if (index == 1) {
           // Lab Tests tab
           _showLabTestOptions();
+        } else if (index == 3) {
+          // Records tab
+          if (widget.clientUser != null) {
+            Navigator.push(
+              context,
+              FadeSlidePageRoute(
+                child: ClientRecordsScreen(clientUser: widget.clientUser!),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please log in to view your records'),
+                backgroundColor: Color(0xFFDC2626),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         } else if (index == 4) {
           // Profile tab
           if (widget.clientUser != null) {

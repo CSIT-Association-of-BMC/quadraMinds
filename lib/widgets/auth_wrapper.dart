@@ -276,27 +276,7 @@ class _AuthWrapperState extends State<AuthWrapper> with WidgetsBindingObserver {
       return _buildLoadingScreen();
     }
 
-    // DEBUG: Force hospital view for testing (set this to true to test hospital side)
-    const bool forceHospitalView =
-        false; // Change this to true to test hospital
-
-    if (_isAuthenticated && forceHospitalView) {
-      debugPrint('AuthWrapper: DEBUG - Forcing Hospital view for testing');
-      final mockHospitalUser = HospitalUser(
-        uid: _authService.currentUser?.uid ?? 'mock_hospital_uid',
-        email: _authService.currentUser?.email ?? 'test@hospital.com',
-        password: '',
-        hospitalName: 'Test Hospital',
-        registrationNumber: 'REG123456',
-        contactPerson: 'Dr. Test',
-        phoneNumber: '1234567890',
-        address: 'Hospital Address',
-        website: 'www.testhospital.com',
-        specializations: ['General Medicine', 'Cardiology'],
-        licenseNumber: 'LIC123456',
-      );
-      return HomeScreenHospital(hospitalUser: mockHospitalUser);
-    }
+    // Removed debug code for production
 
     if (_isAuthenticated &&
         _userType == UserType.client &&

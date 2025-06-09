@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/user_models.dart';
-import '../../utils/page_transitions.dart';
 
 class ClientRecordsScreen extends StatefulWidget {
   final ClientUser? clientUser;
@@ -14,17 +13,11 @@ class ClientRecordsScreen extends StatefulWidget {
 class _ClientRecordsScreenState extends State<ClientRecordsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  int _selectedTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _selectedTabIndex = _tabController.index;
-      });
-    });
   }
 
   @override

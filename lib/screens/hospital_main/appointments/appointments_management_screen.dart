@@ -7,10 +7,12 @@ class AppointmentsManagementScreen extends StatefulWidget {
   const AppointmentsManagementScreen({super.key, this.hospitalUser});
 
   @override
-  State<AppointmentsManagementScreen> createState() => _AppointmentsManagementScreenState();
+  State<AppointmentsManagementScreen> createState() =>
+      _AppointmentsManagementScreenState();
 }
 
-class _AppointmentsManagementScreenState extends State<AppointmentsManagementScreen>
+class _AppointmentsManagementScreenState
+    extends State<AppointmentsManagementScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -26,13 +28,9 @@ class _AppointmentsManagementScreenState extends State<AppointmentsManagementScr
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
     _fadeController.forward();
   }
 
@@ -49,12 +47,18 @@ class _AppointmentsManagementScreenState extends State<AppointmentsManagementScr
       appBar: AppBar(
         title: const Text(
           'Appointments Management',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
         ),
-        backgroundColor: const Color(0xFF1E40AF),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -68,13 +72,24 @@ class _AppointmentsManagementScreenState extends State<AppointmentsManagementScr
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF667EEA).withValues(alpha: 0.1),
+                      const Color(0xFF764BA2).withValues(alpha: 0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(60),
+                  border: Border.all(
+                    color: const Color(0xFF667EEA).withValues(alpha: 0.2),
+                    width: 2,
+                  ),
                 ),
                 child: const Icon(
                   Icons.calendar_month,
                   size: 60,
-                  color: Color(0xFF3B82F6),
+                  color: Color(0xFF667EEA),
                 ),
               ),
               const SizedBox(height: 24),
@@ -101,13 +116,20 @@ class _AppointmentsManagementScreenState extends State<AppointmentsManagementScr
                 padding: const EdgeInsets.all(20),
                 margin: const EdgeInsets.symmetric(horizontal: 32),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  gradient: const LinearGradient(
+                    colors: [Colors.white, Color(0xFFFAFBFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF667EEA).withValues(alpha: 0.1),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
+                      color: const Color(0xFF667EEA).withValues(alpha: 0.1),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
@@ -145,15 +167,12 @@ class _AppointmentsManagementScreenState extends State<AppointmentsManagementScr
           const Icon(
             Icons.check_circle_outline,
             size: 16,
-            color: Color(0xFF10B981),
+            color: Color(0xFF667EEA),
           ),
           const SizedBox(width: 8),
           Text(
             feature,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
           ),
         ],
       ),

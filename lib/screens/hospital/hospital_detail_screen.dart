@@ -121,42 +121,23 @@ class _HospitalDetailScreenState extends State<HospitalDetailScreen>
 
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 200,
       pinned: true,
       backgroundColor: const Color(0xFF2E7D32),
+      elevation: 0,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       leading: GestureDetector(
         onTap: () => Navigator.pop(context),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+        child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+      ),
+      title: Text(
+        widget.hospital.name,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
         ),
       ),
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          widget.hospital.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF2E7D32), Color(0xFF388E3C)],
-            ),
-          ),
-          child: const Center(
-            child: Icon(Icons.local_hospital, size: 80, color: Colors.white),
-          ),
-        ),
-      ),
+      centerTitle: true,
     );
   }
 

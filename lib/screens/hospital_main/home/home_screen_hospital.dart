@@ -5,6 +5,12 @@ import '../../../services/auth_service.dart';
 import '../../auth/login_screen.dart';
 import '../../../utils/page_transitions.dart';
 import '../appointments/appointments_management_screen.dart';
+import '../appointments/hospital_appointments_screen.dart';
+import '../doctors/doctor_hospital.dart';
+import '../profile/settings_hospital_screen.dart';
+import 'components/patients_card.dart';
+import 'components/patient_satisfaction_card.dart';
+import 'components/total_patients_admitted_card.dart';
 
 class HomeScreenHospital extends StatefulWidget {
   final HospitalUser? hospitalUser;
@@ -18,18 +24,12 @@ class HomeScreenHospital extends StatefulWidget {
 class _HomeScreenHospitalState extends State<HomeScreenHospital>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
+  late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   final AuthService _authService = AuthService();
   int _selectedIndex = 0;
-
-  // Dashboard stats
-  final Map<String, dynamic> _dashboardStats = {
-    'totalPatients': 245,
-    'todayAppointments': 18,
-    'pendingRequests': 7,
-    'revenue': 45000,
-  };
 
   @override
   void initState() {
@@ -39,19 +39,54 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
 
   void _initializeAnimations() {
     _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _slideController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
+
     _fadeController.forward();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _slideController.forward();
+    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
+  }
+
+  String _getTimeOfDay() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Morning';
+    } else if (hour < 17) {
+      return 'Afternoon';
+    } else {
+      return 'Evening';
+    }
+  }
+
+  String _getGreetingName() {
+    if (widget.hospitalUser?.hospitalName != null) {
+      return widget.hospitalUser!.hospitalName;
+    }
+    return 'Hospital';
   }
 
   @override
@@ -60,119 +95,164 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
       backgroundColor: const Color(0xFFF8FAFC),
       body: FadeTransition(
         opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: Container(
-                color: const Color(0xFFF5F7FA),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildWelcomeSection(),
-                      const SizedBox(height: 20),
-                      _buildStatsCards(),
-                      const SizedBox(height: 20),
-                      _buildQuickActions(),
-                      const SizedBox(height: 20),
-                      _buildRecentActivity(),
-                      const SizedBox(height: 80), // Space for bottom nav
-                    ],
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: Column(
+            children: [
+              _buildModernAppBar(),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFF8FAFC), Color(0xFFEEF2FF)],
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Number of patients monthly',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const PatientsCard(),
+                        const SizedBox(height: 16),
+                        const PatientSatisfactionCard(),
+                        const SizedBox(height: 16),
+                        const TotalPatientsAdmittedCard(),
+                        const SizedBox(height: 100), // Space for bottom nav
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: _buildModernBottomNav(),
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildModernAppBar() {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
-        left: 16,
-        right: 16,
-        bottom: 10,
+        top: MediaQuery.of(context).padding.top + 16,
+        left: 20,
+        right: 20,
+        bottom: 24,
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
+          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
         ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Hospital Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome Back',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  widget.hospitalUser?.hospitalName ?? 'Hospital Dashboard',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          // Notification and Profile
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.white,
-                  size: 20,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getGreetingName(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'System Online',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: _showProfileMenu,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
                       ),
-                    ],
+                    ),
+                    child: Stack(
+                      children: [
+                        const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEF4444),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.local_hospital,
-                    color: Color(0xFF1E40AF),
-                    size: 20,
-                  ),
-                ),
+                ],
               ),
             ],
           ),
@@ -181,17 +261,21 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildWelcomeCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -202,11 +286,15 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
             height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
+                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.dashboard, color: Colors.white, size: 24),
+            child: const Icon(
+              Icons.dashboard_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -214,7 +302,7 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Hospital Dashboard',
+                  'Hospital Management Dashboard',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -223,8 +311,12 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Manage your hospital operations efficiently',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  'Streamline your healthcare operations efficiently',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -234,401 +326,86 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
     );
   }
 
-  Widget _buildStatsCards() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Overview',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total Patients',
-                _dashboardStats['totalPatients'].toString(),
-                Icons.people,
-                const Color(0xFF10B981),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'Today\'s Appointments',
-                _dashboardStats['todayAppointments'].toString(),
-                Icons.calendar_today,
-                const Color(0xFF3B82F6),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                'Pending Requests',
-                _dashboardStats['pendingRequests'].toString(),
-                Icons.pending_actions,
-                const Color(0xFFF59E0B),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                'Revenue',
-                'Rs. ${_dashboardStats['revenue']}',
-                Icons.attach_money,
-                const Color(0xFF8B5CF6),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildModernBottomNav() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 12,
+        bottom: MediaQuery.of(context).padding.bottom + 12,
+        left: 16,
+        right: 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
-          ),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      'Manage Appointments',
-                      Icons.calendar_month,
-                      const Color(0xFF3B82F6),
-                      () => _navigateToAppointments(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionButton(
-                      'Patient Records',
-                      Icons.folder_shared,
-                      const Color(0xFF10B981),
-                      () => _navigateToPatientRecords(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      'Staff Management',
-                      Icons.group,
-                      const Color(0xFFF59E0B),
-                      () => _navigateToStaffManagement(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionButton(
-                      'Reports',
-                      Icons.analytics,
-                      const Color(0xFF8B5CF6),
-                      () => _navigateToReports(),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: Colors.white, size: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Recent Activity',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-            TextButton(
-              onPressed: () => _viewAllActivity(),
-              child: const Text(
-                'View All',
-                style: TextStyle(
-                  color: Color(0xFF3B82F6),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildActivityItem(
-                'New appointment booked',
-                'Dr. Smith - 2:00 PM',
-                Icons.calendar_today,
-                const Color(0xFF3B82F6),
-                '5 min ago',
-              ),
-              const Divider(height: 1),
-              _buildActivityItem(
-                'Patient record updated',
-                'John Doe - Medical History',
-                Icons.folder_shared,
-                const Color(0xFF10B981),
-                '15 min ago',
-              ),
-              const Divider(height: 1),
-              _buildActivityItem(
-                'Staff member added',
-                'Dr. Jane Wilson - Cardiologist',
-                Icons.person_add,
-                const Color(0xFFF59E0B),
-                '1 hour ago',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityItem(
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-    String time,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          Text(time, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildBottomNavItem(Icons.dashboard, 'Dashboard', 0),
-          _buildBottomNavItem(Icons.calendar_today, 'Appointments', 1),
-          _buildBottomNavItem(Icons.people, 'Patients', 2),
-          _buildBottomNavItem(Icons.analytics, 'Reports', 3),
-          _buildBottomNavItem(Icons.settings, 'Settings', 4),
+          _buildModernNavItem(Icons.dashboard_rounded, 'Dashboard', 0),
+          _buildModernNavItem(Icons.calendar_month_rounded, 'Appointments', 1),
+          _buildModernNavItem(Icons.medical_services_rounded, 'Doctors', 2),
+          _buildModernNavItem(Icons.settings_rounded, 'Settings', 3),
         ],
       ),
     );
   }
 
-  Widget _buildBottomNavItem(IconData icon, String label, int index) {
+  Widget _buildModernNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        setState(() => _selectedIndex = index);
+        if (index == 1) {
+          _navigateToAppointments();
+        } else if (index == 2) {
+          _navigateToDoctors();
+        } else if (index == 3) {
+          _navigateToSettings();
+        }
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? const Color(0xFF3B82F6) : Colors.grey[600],
-              size: 20,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? const Color(0xFF667EEA).withValues(alpha: 0.15)
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    isSelected
+                        ? Border.all(
+                          color: const Color(0xFF667EEA).withValues(alpha: 0.3),
+                        )
+                        : null,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? const Color(0xFF667EEA) : Colors.grey[600],
+                size: 20,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF3B82F6) : Colors.grey[600],
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF667EEA) : Colors.grey[600],
               ),
             ),
           ],
@@ -642,37 +419,31 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
     Navigator.push(
       context,
       FadeSlidePageRoute(
-        child: AppointmentsManagementScreen(hospitalUser: widget.hospitalUser),
+        child: HospitalAppointmentsScreen(hospitalUser: widget.hospitalUser),
       ),
     );
   }
 
-  void _navigateToPatientRecords() {
-    // TODO: Navigate to patient records screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Patient records coming soon')),
+  void _navigateToDoctors() {
+    Navigator.push(
+      context,
+      FadeSlidePageRoute(child: const DoctorHospitalScreen()),
     );
   }
 
-  void _navigateToStaffManagement() {
-    // TODO: Navigate to staff management screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Staff management coming soon')),
-    );
-  }
-
-  void _navigateToReports() {
-    // TODO: Navigate to reports screen
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Reports coming soon')));
-  }
-
-  void _viewAllActivity() {
-    // TODO: Navigate to activity log screen
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Activity log coming soon')));
+  void _navigateToSettings() {
+    if (widget.hospitalUser != null) {
+      Navigator.push(
+        context,
+        FadeSlidePageRoute(
+          child: SettingsHospitalScreen(hospitalUser: widget.hospitalUser!),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hospital user data not available')),
+      );
+    }
   }
 
   void _showProfileMenu() {
@@ -710,7 +481,7 @@ class _HomeScreenHospitalState extends State<HomeScreenHospital>
                   title: const Text('Settings'),
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Navigate to settings screen
+                    _navigateToSettings();
                   },
                 ),
                 ListTile(

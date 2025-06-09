@@ -27,8 +27,12 @@ class AuthStateService {
       // Save authentication status
       await prefs.setBool(_keyIsAuthenticated, true);
 
-      // Save user type
+      // Save user type with email mapping for better detection
       await prefs.setString(_keyUserType, user.userType.name);
+      await prefs.setString(
+        'user_email_${user.email.toLowerCase()}',
+        user.userType.name,
+      );
 
       // Save user data as JSON
       final userDataJson = jsonEncode(user.toMap());
@@ -41,6 +45,9 @@ class AuthStateService {
       );
 
       debugPrint('AuthStateService: Authentication state saved successfully');
+      debugPrint(
+        'AuthStateService: User type ${user.userType.name} mapped to email ${user.email}',
+      );
     } catch (e) {
       debugPrint('AuthStateService: Error saving auth state: $e');
       rethrow;
@@ -59,8 +66,12 @@ class AuthStateService {
       // Save authentication status
       await prefs.setBool(_keyIsAuthenticated, true);
 
-      // Save user type
+      // Save user type with email mapping for better detection
       await prefs.setString(_keyUserType, user.userType.name);
+      await prefs.setString(
+        'user_email_${user.email.toLowerCase()}',
+        user.userType.name,
+      );
 
       // Save user data as JSON
       final userDataJson = jsonEncode(user.toMap());
@@ -74,6 +85,9 @@ class AuthStateService {
 
       debugPrint(
         'AuthStateService: Hospital authentication state saved successfully',
+      );
+      debugPrint(
+        'AuthStateService: Hospital user type ${user.userType.name} mapped to email ${user.email}',
       );
     } catch (e) {
       debugPrint('AuthStateService: Error saving hospital auth state: $e');
@@ -109,14 +123,14 @@ class AuthStateService {
 
       if (daysSinceAuth > 30) {
         debugPrint(
-          'AuthStateService: Session expired (${daysSinceAuth} days old), clearing auth state',
+          'AuthStateService: Session expired ($daysSinceAuth days old), clearing auth state',
         );
         await clearAuthState();
         return false;
       }
 
       debugPrint(
-        'AuthStateService: User is authenticated (session ${daysSinceAuth} days old)',
+        'AuthStateService: User is authenticated (session $daysSinceAuth days old)',
       );
       return true;
     } catch (e) {
@@ -148,6 +162,39 @@ class AuthStateService {
       }
     } catch (e) {
       debugPrint('AuthStateService: Error getting user type: $e');
+      return null;
+    }
+  }
+
+  /// Get user type by email for enhanced detection
+  Future<UserType?> getUserTypeByEmail(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userTypeString = prefs.getString(
+        'user_email_${email.toLowerCase()}',
+      );
+
+      if (userTypeString == null) {
+        debugPrint('AuthStateService: No user type found for email: $email');
+        return null;
+      }
+
+      debugPrint(
+        'AuthStateService: Found user type $userTypeString for email: $email',
+      );
+
+      // Convert string back to UserType enum
+      switch (userTypeString) {
+        case 'client':
+          return UserType.client;
+        case 'hospital':
+          return UserType.hospital;
+        default:
+          debugPrint('AuthStateService: Unknown user type: $userTypeString');
+          return null;
+      }
+    } catch (e) {
+      debugPrint('AuthStateService: Error getting user type by email: $e');
       return null;
     }
   }

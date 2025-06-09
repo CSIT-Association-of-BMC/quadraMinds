@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../models/user_models.dart';
-import '../../services/auth_service.dart';
-import '../auth/login_screen.dart';
-import '../../utils/page_transitions.dart';
-import 'widgets/profile_menu_item.dart';
-import 'change_password_screen.dart';
+import '../../../models/user_models.dart';
+import '../../../services/auth_service.dart';
+import '../../auth/login_screen.dart';
+import '../../../utils/page_transitions.dart';
+import '../../profile_client/widgets/profile_menu_item.dart';
+import 'change_password_hospital_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
-  final ClientUser clientUser;
+class SettingsHospitalScreen extends StatefulWidget {
+  final HospitalUser hospitalUser;
 
-  const SettingsScreen({super.key, required this.clientUser});
+  const SettingsHospitalScreen({super.key, required this.hospitalUser});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<SettingsHospitalScreen> createState() => _SettingsHospitalScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen>
+class _SettingsHospitalScreenState extends State<SettingsHospitalScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -27,6 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _smsNotifications = false;
   bool _pushNotifications = true;
   bool _darkMode = false;
+  bool _autoBackup = true;
+  bool _dataSync = true;
 
   @override
   void initState() {
@@ -53,7 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
-          'Settings',
+          'Hospital Settings',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         flexibleSpace: Container(
@@ -75,6 +77,13 @@ class _SettingsScreenState extends State<SettingsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Hospital Info Section
+              _buildSectionTitle('Hospital Information'),
+              const SizedBox(height: 12),
+              _buildHospitalInfoSection(),
+
+              const SizedBox(height: 24),
+
               // Notifications Section
               _buildSectionTitle('Notifications'),
               const SizedBox(height: 12),
@@ -82,10 +91,10 @@ class _SettingsScreenState extends State<SettingsScreen>
 
               const SizedBox(height: 24),
 
-              // Appearance Section
-              _buildSectionTitle('Appearance'),
+              // System Settings Section
+              _buildSectionTitle('System Settings'),
               const SizedBox(height: 12),
-              _buildAppearanceSection(),
+              _buildSystemSettingsSection(),
 
               const SizedBox(height: 24),
 
@@ -96,10 +105,10 @@ class _SettingsScreenState extends State<SettingsScreen>
 
               const SizedBox(height: 24),
 
-              // App Preferences Section
-              _buildSectionTitle('App Preferences'),
+              // Data Management Section
+              _buildSectionTitle('Data Management'),
               const SizedBox(height: 12),
-              _buildPreferencesSection(),
+              _buildDataManagementSection(),
 
               const SizedBox(height: 24),
 
@@ -124,6 +133,47 @@ class _SettingsScreenState extends State<SettingsScreen>
         fontWeight: FontWeight.w700,
         color: Color(0xFF1F2937),
         letterSpacing: 0.3,
+      ),
+    );
+  }
+
+  Widget _buildHospitalInfoSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ProfileMenuItem(
+            icon: Icons.local_hospital_outlined,
+            title: 'Hospital Profile',
+            subtitle: widget.hospitalUser.hospitalName,
+            onTap: () => _showComingSoon('Hospital Profile'),
+          ),
+          const Divider(height: 1, indent: 60),
+          ProfileMenuItem(
+            icon: Icons.business_outlined,
+            title: 'Registration Details',
+            subtitle: 'Reg. No: ${widget.hospitalUser.registrationNumber}',
+            onTap: () => _showComingSoon('Registration Details'),
+          ),
+          const Divider(height: 1, indent: 60),
+          ProfileMenuItem(
+            icon: Icons.medical_services_outlined,
+            title: 'Specializations',
+            subtitle:
+                '${widget.hospitalUser.specializations.length} specialties',
+            onTap: () => _showComingSoon('Specializations'),
+          ),
+        ],
       ),
     );
   }
@@ -164,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             _buildSwitchTile(
               icon: Icons.email_outlined,
               title: 'Email Notifications',
-              subtitle: 'Receive notifications via email',
+              subtitle: 'Appointment updates, system alerts',
               value: _emailNotifications,
               onChanged: (value) {
                 setState(() {
@@ -176,7 +226,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             _buildSwitchTile(
               icon: Icons.sms_outlined,
               title: 'SMS Notifications',
-              subtitle: 'Receive notifications via SMS',
+              subtitle: 'Critical alerts and reminders',
               value: _smsNotifications,
               onChanged: (value) {
                 setState(() {
@@ -188,7 +238,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             _buildSwitchTile(
               icon: Icons.phone_android_outlined,
               title: 'Push Notifications',
-              subtitle: 'Receive push notifications on device',
+              subtitle: 'Real-time updates on device',
               value: _pushNotifications,
               onChanged: (value) {
                 setState(() {
@@ -202,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _buildAppearanceSection() {
+  Widget _buildSystemSettingsSection() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -231,17 +281,17 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           const Divider(height: 1, indent: 60),
           ProfileMenuItem(
-            icon: Icons.palette_outlined,
-            title: 'Theme Color',
-            subtitle: 'Healthcare Blue',
-            onTap: () => _showComingSoon('Theme Color'),
+            icon: Icons.language_outlined,
+            title: 'Language',
+            subtitle: 'English (US)',
+            onTap: () => _showLanguageDialog(),
           ),
           const Divider(height: 1, indent: 60),
           ProfileMenuItem(
-            icon: Icons.text_fields_outlined,
-            title: 'Font Size',
-            subtitle: 'Medium',
-            onTap: () => _showComingSoon('Font Size'),
+            icon: Icons.schedule_outlined,
+            title: 'Working Hours',
+            subtitle: 'Set hospital operating hours',
+            onTap: () => _showComingSoon('Working Hours'),
           ),
         ],
       ),
@@ -271,17 +321,17 @@ class _SettingsScreenState extends State<SettingsScreen>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ChangePasswordScreen(),
+                  builder: (context) => const ChangePasswordHospitalScreen(),
                 ),
               );
             },
           ),
           const Divider(height: 1, indent: 60),
           ProfileMenuItem(
-            icon: Icons.fingerprint_outlined,
-            title: 'Biometric Login',
-            subtitle: 'Use fingerprint or face ID',
-            onTap: () => _showComingSoon('Biometric Login'),
+            icon: Icons.admin_panel_settings_outlined,
+            title: 'Admin Access',
+            subtitle: 'Manage admin permissions',
+            onTap: () => _showComingSoon('Admin Access'),
           ),
           const Divider(height: 1, indent: 60),
           ProfileMenuItem(
@@ -295,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _buildPreferencesSection() {
+  Widget _buildDataManagementSection() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -310,47 +360,45 @@ class _SettingsScreenState extends State<SettingsScreen>
       ),
       child: Column(
         children: [
-          ProfileMenuItem(
-            icon: Icons.language_outlined,
-            title: 'Language',
-            subtitle: 'English (US)',
-            onTap: () => _showLanguageDialog(),
+          _buildSwitchTile(
+            icon: Icons.backup_outlined,
+            title: 'Auto Backup',
+            subtitle: 'Automatically backup hospital data',
+            value: _autoBackup,
+            onChanged: (value) {
+              setState(() {
+                _autoBackup = value;
+              });
+              _showComingSoon('Auto Backup');
+            },
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          ProfileMenuItem(
-            icon: Icons.help_outline,
-            title: 'Help & Support',
-            subtitle: 'Get help and contact support',
-            onTap: () => _showComingSoon('Help & Support'),
+          const Divider(height: 1, indent: 60),
+          _buildSwitchTile(
+            icon: Icons.sync_outlined,
+            title: 'Data Synchronization',
+            subtitle: 'Sync data across all devices',
+            value: _dataSync,
+            onChanged: (value) {
+              setState(() {
+                _dataSync = value;
+              });
+              _showComingSoon('Data Sync');
+            },
           ),
           const Divider(height: 1, indent: 60),
           ProfileMenuItem(
-            icon: Icons.info_outline,
-            title: 'About',
-            subtitle: 'App version and information',
-            onTap: () => _showComingSoon('About'),
+            icon: Icons.download_outlined,
+            title: 'Export Data',
+            subtitle: 'Download hospital records',
+            onTap: () => _showComingSoon('Export Data'),
           ),
           const Divider(height: 1, indent: 60),
-          _buildLogoutMenuItem(),
+          ProfileMenuItem(
+            icon: Icons.analytics_outlined,
+            title: 'Analytics Settings',
+            subtitle: 'Configure reporting preferences',
+            onTap: () => _showComingSoon('Analytics Settings'),
+          ),
         ],
       ),
     );
@@ -447,8 +495,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                 _buildLanguageOption('English (US)', true),
                 _buildLanguageOption('Hindi (हिंदी)', false),
                 _buildLanguageOption('Bengali (বাংলা)', false),
-                _buildLanguageOption('Tamil (தமিழ்)', false),
-                _buildLanguageOption('Telugu (తెলুগు)', false),
+                _buildLanguageOption('Tamil (தமிழ்)', false),
+                _buildLanguageOption('Telugu (తెలుగు)', false),
               ],
             ),
             actions: [
@@ -515,6 +563,48 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
+  Widget _buildAccountSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ProfileMenuItem(
+            icon: Icons.help_outline,
+            title: 'Help & Support',
+            subtitle: 'Get help and contact support',
+            onTap: () => _showComingSoon('Help & Support'),
+          ),
+          const Divider(height: 1, indent: 60),
+          ProfileMenuItem(
+            icon: Icons.info_outline,
+            title: 'About',
+            subtitle: 'App version and information',
+            onTap: () => _showComingSoon('About'),
+          ),
+          const Divider(height: 1, indent: 60),
+          ProfileMenuItem(
+            icon: Icons.feedback_outlined,
+            title: 'Feedback',
+            subtitle: 'Send feedback to improve the app',
+            onTap: () => _showComingSoon('Feedback'),
+          ),
+          const Divider(height: 1, indent: 60),
+          _buildLogoutMenuItem(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLogoutMenuItem() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -544,7 +634,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Sign out of your account',
+                  'Sign out of hospital account',
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
               ],
@@ -582,9 +672,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                 color: Color(0xFF1F2937),
               ),
             ),
-            content: const Text(
-              'Are you sure you want to logout? You will need to sign in again to access your account.',
-              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+            content: Text(
+              'Are you sure you want to logout from ${widget.hospitalUser.hospitalName}? You will need to sign in again to access the hospital dashboard.',
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
             ),
             actions: [
               TextButton(
@@ -617,7 +707,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _handleLogout() async {
     try {
-      debugPrint('SettingsScreen: Starting logout process...');
+      debugPrint(
+        'HospitalSettingsScreen: Starting logout process for ${widget.hospitalUser.hospitalName}...',
+      );
 
       // Show loading indicator
       showDialog(
@@ -628,14 +720,18 @@ class _SettingsScreenState extends State<SettingsScreen>
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              content: const Padding(
-                padding: EdgeInsets.all(20),
+              content: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: Color(0xFF667EEA)),
-                    SizedBox(width: 20),
-                    Text('Signing out...'),
+                    const CircularProgressIndicator(color: Color(0xFF667EEA)),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                        'Signing out from ${widget.hospitalUser.hospitalName}...',
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -644,7 +740,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
       // Perform logout
       await _authService.signOut();
-      debugPrint('SettingsScreen: Logout successful');
+      debugPrint('HospitalSettingsScreen: Logout successful');
 
       if (mounted) {
         // Close loading dialog
@@ -653,11 +749,15 @@ class _SettingsScreenState extends State<SettingsScreen>
         // Show success message briefly
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Logged out successfully'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Logged out from ${widget.hospitalUser.hospitalName} successfully',
+                  ),
+                ),
               ],
             ),
             backgroundColor: const Color(0xFF10B981),
@@ -682,7 +782,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         }
       }
     } catch (e) {
-      debugPrint('SettingsScreen: Logout error: $e');
+      debugPrint('HospitalSettingsScreen: Logout error: $e');
 
       if (mounted) {
         // Close loading dialog
