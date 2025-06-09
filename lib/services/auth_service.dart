@@ -1,13 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_models.dart';
 import '../models/user_type.dart';
 import 'auth_state_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final AuthStateService _authStateService = AuthStateService();
 
   // Initialize Firebase Auth persistence
@@ -52,37 +50,50 @@ class AuthService {
       );
 
       if (result.user != null) {
-        // Get user data from Firestore
-        debugPrint('AuthService: Fetching user data from Firestore...');
-        final userData = await getUserData(result.user!.uid);
+        // Try to get user data from local storage first
+        debugPrint('AuthService: Checking local user data...');
+        final localUserData = await _authStateService.getStoredClientUser();
 
-        if (userData != null) {
-          debugPrint('AuthService: User data retrieved successfully');
-          debugPrint('AuthService: User data details: $userData');
-
-          // Validate that we have essential user information
-          final hasValidData =
-              (userData['firstName'] != null &&
-                  userData['firstName'].toString().isNotEmpty) ||
-              (userData['lastName'] != null &&
-                  userData['lastName'].toString().isNotEmpty) ||
-              (userData['hospitalName'] != null &&
-                  userData['hospitalName'].toString().isNotEmpty) ||
-              (userData['contactPerson'] != null &&
-                  userData['contactPerson'].toString().isNotEmpty);
-
-          if (hasValidData) {
-            return {'success': true, 'user': result.user, 'userData': userData};
-          } else {
-            debugPrint(
-              'AuthService: Warning - User data found but missing essential name fields',
-            );
-          }
-        } else {
-          debugPrint(
-            'AuthService: Warning - No user data found in Firestore, but auth succeeded',
-          );
+        if (localUserData != null) {
+          debugPrint('AuthService: Local user data found');
+          final userData = {
+            'uid': localUserData.uid,
+            'email': localUserData.email,
+            'firstName': localUserData.firstName,
+            'lastName': localUserData.lastName,
+            'phoneNumber': localUserData.phoneNumber,
+            'dateOfBirth': localUserData.dateOfBirth?.toIso8601String(),
+            'address': localUserData.address,
+            'emergencyContact': localUserData.emergencyContact,
+            'userType': 'client',
+          };
+          return {'success': true, 'user': result.user, 'userData': userData};
         }
+
+        // Check for hospital user data
+        final localHospitalData =
+            await _authStateService.getStoredHospitalUser();
+        if (localHospitalData != null) {
+          debugPrint('AuthService: Local hospital data found');
+          final userData = {
+            'uid': localHospitalData.uid,
+            'email': localHospitalData.email,
+            'hospitalName': localHospitalData.hospitalName,
+            'registrationNumber': localHospitalData.registrationNumber,
+            'contactPerson': localHospitalData.contactPerson,
+            'phoneNumber': localHospitalData.phoneNumber,
+            'address': localHospitalData.address,
+            'website': localHospitalData.website,
+            'specializations': localHospitalData.specializations,
+            'licenseNumber': localHospitalData.licenseNumber,
+            'userType': 'hospital',
+          };
+          return {'success': true, 'user': result.user, 'userData': userData};
+        }
+
+        debugPrint(
+          'AuthService: No local user data found, creating fallback data',
+        );
 
         // Enhanced fallback logic when Firestore data is missing or incomplete
         debugPrint('AuthService: Creating enhanced fallback user data...');
@@ -231,54 +242,17 @@ class AuthService {
       );
 
       if (result.user != null) {
-        // Store client data in Firestore with timeout
-        final userData = {
-          'uid': result.user!.uid,
-          'email': clientUser.email,
-          'firstName': clientUser.firstName,
-          'lastName': clientUser.lastName,
-          'phoneNumber': clientUser.phoneNumber,
-          'dateOfBirth': clientUser.dateOfBirth?.toIso8601String(),
-          'address': clientUser.address,
-          'emergencyContact': clientUser.emergencyContact,
-          'userType': 'client',
-          'createdAt': FieldValue.serverTimestamp(),
-        };
-
-        debugPrint('AuthService: Storing user data in Firestore...');
+        // Update user's display name in Firebase Auth
         try {
-          await _firestore
-              .collection('clients')
-              .doc(result.user!.uid)
-              .set(userData)
-              .timeout(
-                const Duration(seconds: 15),
-                onTimeout: () {
-                  throw Exception(
-                    'Firestore write timeout - please check your internet connection',
-                  );
-                },
-              );
-          debugPrint('AuthService: User data stored successfully');
-        } catch (firestoreError) {
-          debugPrint('AuthService: Firestore error: $firestoreError');
-          // Even if Firestore fails, we can still return success since the user was created
-          // The user data can be added later or the user can still use the app
-          debugPrint(
-            'AuthService: Continuing with registration despite Firestore error',
+          await result.user!.updateDisplayName(
+            '${clientUser.firstName} ${clientUser.lastName}',
           );
-
-          // Try to update the user's display name as a fallback
-          try {
-            await result.user!.updateDisplayName(
-              '${clientUser.firstName} ${clientUser.lastName}',
-            );
-            debugPrint('AuthService: Updated user display name as fallback');
-          } catch (displayNameError) {
-            debugPrint(
-              'AuthService: Failed to update display name: $displayNameError',
-            );
-          }
+          debugPrint('AuthService: Updated user display name successfully');
+        } catch (displayNameError) {
+          debugPrint(
+            'AuthService: Failed to update display name: $displayNameError',
+          );
+          // Don't fail registration if display name update fails
         }
 
         // Save authentication state
@@ -338,21 +312,45 @@ class AuthService {
       );
 
       if (result.user != null) {
-        // Store hospital data in Firestore
-        await _firestore.collection('hospitals').doc(result.user!.uid).set({
-          'uid': result.user!.uid,
-          'email': hospitalUser.email,
-          'hospitalName': hospitalUser.hospitalName,
-          'registrationNumber': hospitalUser.registrationNumber,
-          'contactPerson': hospitalUser.contactPerson,
-          'phoneNumber': hospitalUser.phoneNumber,
-          'address': hospitalUser.address,
-          'website': hospitalUser.website,
-          'specializations': hospitalUser.specializations,
-          'licenseNumber': hospitalUser.licenseNumber,
-          'userType': 'hospital',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        // Update user's display name in Firebase Auth
+        try {
+          await result.user!.updateDisplayName(hospitalUser.hospitalName);
+          debugPrint('AuthService: Updated hospital display name successfully');
+        } catch (displayNameError) {
+          debugPrint(
+            'AuthService: Failed to update hospital display name: $displayNameError',
+          );
+          // Don't fail registration if display name update fails
+        }
+
+        // Save authentication state for hospital users
+        try {
+          final hospitalUserWithUid = HospitalUser(
+            uid: result.user!.uid,
+            email: hospitalUser.email,
+            password: '', // Don't store password
+            hospitalName: hospitalUser.hospitalName,
+            registrationNumber: hospitalUser.registrationNumber,
+            contactPerson: hospitalUser.contactPerson,
+            phoneNumber: hospitalUser.phoneNumber,
+            address: hospitalUser.address,
+            website: hospitalUser.website,
+            specializations: hospitalUser.specializations,
+            licenseNumber: hospitalUser.licenseNumber,
+          );
+
+          await _authStateService.saveHospitalAuthState(
+            user: hospitalUserWithUid,
+          );
+          debugPrint(
+            'AuthService: Hospital authentication state saved after registration',
+          );
+        } catch (e) {
+          debugPrint(
+            'AuthService: Failed to save hospital auth state after registration: $e',
+          );
+          // Don't fail the registration if state saving fails
+        }
 
         return {'success': true, 'user': result.user, 'userData': hospitalUser};
       }
@@ -364,111 +362,115 @@ class AuthService {
     }
   }
 
-  // Get user data from Firestore with retry mechanism
+  // Get user data from local storage
   Future<Map<String, dynamic>?> getUserData(String uid) async {
-    int retryCount = 0;
-    const maxRetries = 3;
-    const retryDelay = Duration(seconds: 1);
+    try {
+      debugPrint(
+        'AuthService: Getting user data for UID: $uid from local storage',
+      );
 
-    while (retryCount < maxRetries) {
-      try {
-        debugPrint(
-          'AuthService: Getting user data for UID: $uid (attempt ${retryCount + 1}/$maxRetries)',
-        );
-
-        // Check clients collection first with timeout
-        debugPrint('AuthService: Checking clients collection...');
-        DocumentSnapshot clientDoc = await _firestore
-            .collection('clients')
-            .doc(uid)
-            .get()
-            .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw Exception(
-                  'Firestore read timeout for clients collection',
-                );
-              },
-            );
-
-        if (clientDoc.exists) {
-          final data = clientDoc.data() as Map<String, dynamic>;
-          debugPrint(
-            'AuthService: Found user data in clients collection: $data',
-          );
-
-          // Validate that essential fields exist
-          if (data['firstName'] != null ||
-              data['lastName'] != null ||
-              data['email'] != null) {
-            return data;
-          } else {
-            debugPrint(
-              'AuthService: Warning - Client data exists but missing essential fields',
-            );
-          }
-        }
-
-        // Check hospitals collection with timeout
-        debugPrint('AuthService: Checking hospitals collection...');
-        DocumentSnapshot hospitalDoc = await _firestore
-            .collection('hospitals')
-            .doc(uid)
-            .get()
-            .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw Exception(
-                  'Firestore read timeout for hospitals collection',
-                );
-              },
-            );
-
-        if (hospitalDoc.exists) {
-          final data = hospitalDoc.data() as Map<String, dynamic>;
-          debugPrint(
-            'AuthService: Found user data in hospitals collection: $data',
-          );
-          return data;
-        }
-
-        debugPrint('AuthService: No user data found in either collection');
-        return null;
-      } catch (e) {
-        retryCount++;
-        debugPrint(
-          'AuthService: Error getting user data (attempt $retryCount): $e',
-        );
-
-        if (retryCount >= maxRetries) {
-          debugPrint('AuthService: Max retries reached, giving up');
-          return null;
-        }
-
-        debugPrint(
-          'AuthService: Retrying in ${retryDelay.inSeconds} seconds...',
-        );
-        await Future.delayed(retryDelay);
+      // Check for client user data first
+      final clientUser = await _authStateService.getStoredClientUser();
+      if (clientUser != null && clientUser.uid == uid) {
+        debugPrint('AuthService: Found client user data in local storage');
+        return {
+          'uid': clientUser.uid,
+          'email': clientUser.email,
+          'firstName': clientUser.firstName,
+          'lastName': clientUser.lastName,
+          'phoneNumber': clientUser.phoneNumber,
+          'dateOfBirth': clientUser.dateOfBirth?.toIso8601String(),
+          'address': clientUser.address,
+          'emergencyContact': clientUser.emergencyContact,
+          'userType': 'client',
+        };
       }
-    }
 
-    return null;
+      // Check for hospital user data
+      final hospitalUser = await _authStateService.getStoredHospitalUser();
+      if (hospitalUser != null && hospitalUser.uid == uid) {
+        debugPrint('AuthService: Found hospital user data in local storage');
+        return {
+          'uid': hospitalUser.uid,
+          'email': hospitalUser.email,
+          'hospitalName': hospitalUser.hospitalName,
+          'registrationNumber': hospitalUser.registrationNumber,
+          'contactPerson': hospitalUser.contactPerson,
+          'phoneNumber': hospitalUser.phoneNumber,
+          'address': hospitalUser.address,
+          'website': hospitalUser.website,
+          'specializations': hospitalUser.specializations,
+          'licenseNumber': hospitalUser.licenseNumber,
+          'userType': 'hospital',
+        };
+      }
+
+      debugPrint(
+        'AuthService: No user data found in local storage for UID: $uid',
+      );
+      return null;
+    } catch (e) {
+      debugPrint('AuthService: Error getting user data from local storage: $e');
+      return null;
+    }
   }
 
   // Sign out
   Future<void> signOut() async {
     try {
-      debugPrint('AuthService: Signing out user');
+      final currentUser = _auth.currentUser;
+      debugPrint(
+        'AuthService: Starting sign out process for user: ${currentUser?.uid ?? 'No user'}',
+      );
 
-      // Clear local authentication state
+      // Clear local authentication state first
+      debugPrint('AuthService: Clearing local authentication state...');
       await _authStateService.clearAuthState();
+      debugPrint(
+        'AuthService: Local authentication state cleared successfully',
+      );
 
       // Sign out from Firebase
+      debugPrint('AuthService: Signing out from Firebase...');
       await _auth.signOut();
+      debugPrint('AuthService: Firebase sign out completed');
+
+      // Verify sign out was successful
+      final userAfterSignOut = _auth.currentUser;
+      if (userAfterSignOut == null) {
+        debugPrint(
+          'AuthService: Sign out verification successful - no current user',
+        );
+      } else {
+        debugPrint(
+          'AuthService: Warning - User still exists after sign out: ${userAfterSignOut.uid}',
+        );
+      }
 
       debugPrint('AuthService: User signed out successfully');
     } catch (e) {
       debugPrint('AuthService: Error during sign out: $e');
+      debugPrint('AuthService: Error type: ${e.runtimeType}');
+      rethrow;
+    }
+  }
+
+  // Save authentication state for client user (wrapper method)
+  Future<void> saveAuthState({required ClientUser user}) async {
+    try {
+      await _authStateService.saveAuthState(user: user);
+    } catch (e) {
+      debugPrint('AuthService: Error saving client auth state: $e');
+      rethrow;
+    }
+  }
+
+  // Save authentication state for hospital user (wrapper method)
+  Future<void> saveHospitalAuthState({required HospitalUser user}) async {
+    try {
+      await _authStateService.saveHospitalAuthState(user: user);
+    } catch (e) {
+      debugPrint('AuthService: Error saving hospital auth state: $e');
       rethrow;
     }
   }
@@ -494,37 +496,57 @@ class AuthService {
           'AuthService: User not authenticated locally, but Firebase user exists',
         );
 
-        // Try to restore local state from Firebase user data
+        // Try to create fallback user data from Firebase user info
         try {
-          final userData = await getUserData(firebaseUser.uid);
-          if (userData != null && userData['userType'] == 'client') {
-            debugPrint(
-              'AuthService: Restoring local auth state from Firebase data',
-            );
+          debugPrint(
+            'AuthService: Creating fallback user data from Firebase user',
+          );
 
-            final clientUser = ClientUser(
-              uid: firebaseUser.uid,
-              email: userData['email'] ?? firebaseUser.email ?? '',
-              password: '', // Don't store password
-              firstName: userData['firstName'] ?? '',
-              lastName: userData['lastName'] ?? '',
-              phoneNumber: userData['phoneNumber'] ?? '',
-              dateOfBirth:
-                  userData['dateOfBirth'] != null
-                      ? (userData['dateOfBirth'] is String
-                          ? DateTime.tryParse(userData['dateOfBirth'] as String)
-                          : userData['dateOfBirth'] as DateTime?)
-                      : null,
-              address: userData['address'],
-              emergencyContact: userData['emergencyContact'],
-            );
+          // Extract name from email or display name
+          String fallbackFirstName = '';
+          String fallbackLastName = '';
 
-            await _authStateService.saveAuthState(user: clientUser);
-            debugPrint('AuthService: Local auth state restored successfully');
-            return true;
+          if (firebaseUser.displayName != null &&
+              firebaseUser.displayName!.isNotEmpty) {
+            final displayNameParts = firebaseUser.displayName!.split(' ');
+            fallbackFirstName = displayNameParts.first;
+            if (displayNameParts.length > 1) {
+              fallbackLastName = displayNameParts.skip(1).join(' ');
+            }
+          } else if (firebaseUser.email != null &&
+              firebaseUser.email!.isNotEmpty) {
+            final emailParts = firebaseUser.email!.split('@');
+            if (emailParts.isNotEmpty) {
+              final emailName = emailParts[0];
+              final nameParts = emailName.split(RegExp(r'[._-]'));
+              if (nameParts.length >= 2) {
+                fallbackFirstName = _capitalizeFirst(nameParts[0]);
+                fallbackLastName = _capitalizeFirst(nameParts[1]);
+              } else {
+                fallbackFirstName = _capitalizeFirst(emailName);
+              }
+            }
           }
+
+          final clientUser = ClientUser(
+            uid: firebaseUser.uid,
+            email: firebaseUser.email ?? '',
+            password: '', // Don't store password
+            firstName: fallbackFirstName,
+            lastName: fallbackLastName,
+            phoneNumber: '',
+            dateOfBirth: null,
+            address: null,
+            emergencyContact: null,
+          );
+
+          await _authStateService.saveAuthState(user: clientUser);
+          debugPrint(
+            'AuthService: Fallback local auth state created successfully',
+          );
+          return true;
         } catch (e) {
-          debugPrint('AuthService: Failed to restore local auth state: $e');
+          debugPrint('AuthService: Failed to create fallback auth state: $e');
         }
 
         return false;
@@ -562,6 +584,44 @@ class AuthService {
       return clientUser;
     } catch (e) {
       debugPrint('AuthService: Error getting current client user: $e');
+      return null;
+    }
+  }
+
+  // Get current authenticated hospital user
+  Future<HospitalUser?> getCurrentHospitalUser() async {
+    try {
+      final isAuth = await isUserAuthenticated();
+      if (!isAuth) {
+        debugPrint(
+          'AuthService: User not authenticated, cannot get hospital user',
+        );
+        return null;
+      }
+
+      final userType = await _authStateService.getUserType();
+      if (userType != UserType.hospital) {
+        debugPrint('AuthService: User is not a hospital type');
+        return null;
+      }
+
+      final hospitalUser = await _authStateService.getStoredHospitalUser();
+      debugPrint(
+        'AuthService: Retrieved current hospital user: ${hospitalUser?.hospitalName}',
+      );
+      return hospitalUser;
+    } catch (e) {
+      debugPrint('AuthService: Error getting current hospital user: $e');
+      return null;
+    }
+  }
+
+  // Get stored user type (wrapper for AuthStateService method)
+  Future<UserType?> getStoredUserType() async {
+    try {
+      return await _authStateService.getUserType();
+    } catch (e) {
+      debugPrint('AuthService: Error getting stored user type: $e');
       return null;
     }
   }
@@ -631,24 +691,9 @@ class AuthService {
 
       debugPrint('AuthService: Attempting to delete user account: ${user.uid}');
 
-      // Get user data to determine collection
-      final userData = await getUserData(user.uid);
-
-      // Delete user data from Firestore
-      if (userData != null) {
-        final userType = userData['userType'];
-        if (userType == 'client') {
-          await _firestore.collection('clients').doc(user.uid).delete();
-          debugPrint('AuthService: Client data deleted from Firestore');
-        } else if (userType == 'hospital') {
-          await _firestore.collection('hospitals').doc(user.uid).delete();
-          debugPrint('AuthService: Hospital data deleted from Firestore');
-        }
-      }
-
-      // Clear local authentication state
+      // Clear local authentication state (this removes all local user data)
       await _authStateService.clearAuthState();
-      debugPrint('AuthService: Local auth state cleared');
+      debugPrint('AuthService: Local auth state and user data cleared');
 
       // Delete Firebase Auth user
       await user.delete();
@@ -659,19 +704,466 @@ class AuthService {
     }
   }
 
-  // Get user type from Firestore
+  // Get user type from local storage
   Future<UserType?> getUserType(String uid) async {
     try {
-      final userData = await getUserData(uid);
-      if (userData != null && userData['userType'] != null) {
-        return userData['userType'] == 'client'
-            ? UserType.client
-            : UserType.hospital;
-      }
-      return null;
+      // Use the AuthStateService method which gets user type from local storage
+      return await _authStateService.getUserType();
     } catch (e) {
       debugPrint('Error getting user type: $e');
       return null;
+    }
+  }
+
+  // Enhanced email-based user type detection with Gmail-specific logic
+  Future<UserType?> detectUserTypeFromEmail(String email) async {
+    try {
+      debugPrint('AuthService: Detecting user type from email: $email');
+
+      // First check local storage for existing user type by email
+      final storedUserTypeByEmail = await _authStateService.getUserTypeByEmail(
+        email,
+      );
+      if (storedUserTypeByEmail != null) {
+        debugPrint(
+          'AuthService: Found stored user type by email: ${storedUserTypeByEmail.name}',
+        );
+        return storedUserTypeByEmail;
+      }
+
+      // Fallback to general stored user type
+      final storedUserType = await _authStateService.getUserType();
+      if (storedUserType != null) {
+        debugPrint(
+          'AuthService: Found general stored user type: ${storedUserType.name}',
+        );
+        return storedUserType;
+      }
+
+      // Check if we have stored client user data with this email
+      final storedClientUser = await _authStateService.getStoredClientUser();
+      if (storedClientUser != null &&
+          storedClientUser.email.toLowerCase() == email.toLowerCase()) {
+        debugPrint('AuthService: Found client user data for email');
+        return UserType.client;
+      }
+
+      // Check if we have stored hospital user data with this email
+      final storedHospitalUser =
+          await _authStateService.getStoredHospitalUser();
+      if (storedHospitalUser != null &&
+          storedHospitalUser.email.toLowerCase() == email.toLowerCase()) {
+        debugPrint('AuthService: Found hospital user data for email');
+        return UserType.hospital;
+      }
+
+      // Enhanced email pattern-based detection
+      final emailLower = email.toLowerCase();
+      final emailUsername = emailLower.split('@').first;
+      final emailDomain =
+          emailLower.contains('@') ? emailLower.split('@').last : '';
+
+      debugPrint(
+        'AuthService: Analyzing email - Username: $emailUsername, Domain: $emailDomain',
+      );
+
+      // Enhanced hospital email patterns with more comprehensive coverage
+      final hospitalPatterns = [
+        // Medical institutions
+        'hospital',
+        'medical',
+        'health',
+        'clinic',
+        'healthcare',
+        'medcenter',
+        'medicalcenter',
+        'hospice', 'infirmary', 'sanitarium', 'polyclinic', 'dispensary',
+
+        // Medical specialties
+        'surgery',
+        'cardiology',
+        'oncology',
+        'pediatrics',
+        'orthopedics',
+        'neurology',
+        'radiology', 'pathology', 'pharmacy', 'dental', 'veterinary', 'rehab',
+        'psychiatry',
+        'therapy',
+        'physiotherapy',
+        'dermatology',
+        'ophthalmology',
+        'ent', 'gynecology', 'urology', 'gastroenterology', 'pulmonology',
+        'nephrology',
+        'endocrinology',
+        'hematology',
+        'immunology',
+        'anesthesiology',
+        'surgical', 'obstetrics', 'geriatrics', 'rheumatology', 'infectious',
+
+        // Medical professionals
+        'doctor', 'dr', 'physician', 'specialist', 'consultant', 'practitioner',
+        'surgeon', 'nurse', 'medic', 'paramedic', 'therapist', 'pharmacist',
+
+        // Healthcare facilities and services
+        'nursing', 'care', 'wellness', 'diagnostic', 'laboratory', 'lab',
+        'emergency', 'trauma', 'icu', 'nicu', 'maternity', 'ambulatory',
+        'outpatient', 'inpatient', 'rehabilitation', 'recovery', 'treatment',
+
+        // Medical organizations and networks
+        'healthsystem', 'healthnetwork', 'medgroup', 'healthgroup', 'mednet',
+        'healthcorp',
+        'medcorp',
+        'healthservices',
+        'medservices',
+        'healthcenter',
+        'medic',
+        'nurse',
+        'paramedic',
+        'therapist',
+        'counselor',
+        'psychologist',
+        'psychiatrist',
+        'pharmacist',
+        'technician',
+        'technologist',
+        'assistant',
+        'aide',
+        'coordinator',
+        'administrator',
+        'manager',
+        'director',
+        'supervisor',
+        'staff',
+        'employee',
+        'worker',
+        'professional',
+        'provider',
+        'service',
+        'services',
+        'center',
+        'centre',
+        'institute',
+        'institution',
+        'foundation',
+        'organization',
+        'association',
+        'society',
+        'group',
+        'network',
+        'system',
+        'systems',
+        'corp',
+        'corporation',
+        'company',
+        'inc',
+        'ltd',
+        'llc',
+        'org',
+        'gov',
+        'edu',
+        'ac',
+        'nhs',
+        'who',
+        'cdc',
+        'nih',
+        'fda',
+        'cms',
+        'hhs',
+        'va',
+        'dod',
+        'military',
+        'army',
+        'navy',
+        'airforce',
+        'marines',
+        'coastguard',
+        'veterans',
+        'public',
+        'state',
+        'county',
+        'city',
+        'municipal',
+        'federal',
+        'national',
+        'regional',
+        'local',
+        'community',
+        'rural',
+        'urban',
+        'suburban',
+        'metro',
+        'metropolitan',
+        'district',
+        'zone',
+        'area',
+        'region',
+        'territory',
+        'province',
+        'state',
+        'country',
+        'nation',
+        'international',
+        'global',
+        'worldwide',
+        'universal',
+        'general',
+        'specialty',
+        'specialized',
+        'comprehensive',
+        'integrated',
+        'holistic',
+        'alternative',
+        'complementary',
+        'traditional',
+        'modern',
+        'advanced',
+        'innovative',
+        'cutting-edge',
+        'state-of-the-art',
+        'world-class',
+        'premier',
+        'leading',
+        'top',
+        'best',
+        'excellent',
+        'quality',
+        'superior',
+        'outstanding',
+        'exceptional',
+        'remarkable',
+        'extraordinary',
+        'unique',
+        'special',
+        'exclusive',
+        'premium',
+        'luxury',
+        'elite',
+        'prestigious',
+        'renowned',
+        'famous',
+        'well-known',
+        'established',
+        'trusted',
+        'reliable',
+        'dependable',
+        'professional',
+        'expert',
+        'experienced',
+        'skilled',
+        'qualified',
+        'certified',
+        'licensed',
+        'accredited',
+        'approved',
+        'authorized',
+        'recognized',
+        'endorsed',
+        'recommended',
+        'preferred',
+        'chosen',
+        'selected',
+        'designated',
+        'appointed',
+        'assigned',
+        'allocated',
+        'dedicated',
+        'committed',
+        'devoted',
+        'focused',
+        'specialized',
+        'concentrated',
+        'centralized',
+        'decentralized',
+        'distributed',
+        'networked',
+        'connected',
+        'linked',
+        'associated',
+        'affiliated',
+        'partnered',
+        'allied',
+        'united',
+        'joint',
+        'collaborative',
+        'cooperative',
+        'coordinated',
+        'integrated',
+        'unified',
+        'consolidated',
+        'merged',
+        'combined',
+        'joined',
+        'connected',
+        'linked',
+        'associated',
+        'affiliated',
+        'partnered',
+        'allied',
+        'united',
+        'joint',
+        'collaborative',
+        'cooperative',
+        'coordinated',
+        'integrated',
+        'unified',
+        'consolidated',
+        'merged',
+        'combined',
+        'joined',
+      ];
+
+      // Special handling for Gmail and other common email providers
+      final isCommonProvider = [
+        'gmail.com',
+        'yahoo.com',
+        'hotmail.com',
+        'outlook.com',
+        'icloud.com',
+        'aol.com',
+        'live.com',
+        'msn.com',
+      ].contains(emailDomain);
+
+      if (isCommonProvider) {
+        debugPrint('AuthService: Detected common email provider: $emailDomain');
+
+        // For Gmail and other common providers, focus on username patterns
+        // Check if username contains hospital-related patterns
+        for (final pattern in hospitalPatterns) {
+          if (emailUsername.contains(pattern)) {
+            debugPrint(
+              'AuthService: Gmail username contains hospital pattern: $pattern',
+            );
+            return UserType.hospital;
+          }
+        }
+
+        // Additional Gmail-specific patterns for hospitals
+        final gmailHospitalPatterns = [
+          'hosp',
+          'med',
+          'clinic',
+          'health',
+          'care',
+          'doc',
+          'dr',
+          'nurse',
+          'pharmacy',
+          'dental',
+          'vet',
+          'therapy',
+          'rehab',
+          'surgery',
+          'cardio',
+          'neuro',
+          'ortho',
+          'pedia',
+          'gyne',
+          'uro',
+          'ent',
+          'admin',
+          'staff',
+          'dept',
+          'unit',
+          'ward',
+          'icu',
+          'er',
+          'lab',
+        ];
+
+        for (final pattern in gmailHospitalPatterns) {
+          if (emailUsername.contains(pattern)) {
+            debugPrint(
+              'AuthService: Gmail username contains specific hospital pattern: $pattern',
+            );
+            return UserType.hospital;
+          }
+        }
+
+        // Check for common hospital naming conventions in Gmail
+        // e.g., firstname.lastname.hospital@gmail.com, hospitalname.admin@gmail.com
+        if (emailUsername.contains('.')) {
+          final usernameParts = emailUsername.split('.');
+          for (final part in usernameParts) {
+            for (final pattern in hospitalPatterns) {
+              if (part == pattern ||
+                  part.startsWith(pattern) ||
+                  part.endsWith(pattern)) {
+                debugPrint(
+                  'AuthService: Gmail username part contains hospital pattern: $part -> $pattern',
+                );
+                return UserType.hospital;
+              }
+            }
+          }
+        }
+
+        debugPrint(
+          'AuthService: No hospital patterns found in Gmail username, defaulting to client',
+        );
+        return UserType.client;
+      } else {
+        // For institutional domains, check both domain and username
+        debugPrint('AuthService: Checking institutional domain: $emailDomain');
+
+        // Check domain for hospital patterns
+        for (final pattern in hospitalPatterns) {
+          if (emailDomain.contains(pattern)) {
+            debugPrint(
+              'AuthService: Domain contains hospital pattern: $pattern',
+            );
+            return UserType.hospital;
+          }
+        }
+
+        // Check username for hospital patterns
+        for (final pattern in hospitalPatterns) {
+          if (emailUsername.contains(pattern)) {
+            debugPrint(
+              'AuthService: Username contains hospital pattern: $pattern',
+            );
+            return UserType.hospital;
+          }
+        }
+
+        // Check for common institutional domain patterns
+        final institutionalPatterns = ['.edu', '.gov', '.org', '.mil'];
+        final hasInstitutionalDomain = institutionalPatterns.any(
+          (pattern) => emailDomain.endsWith(pattern),
+        );
+
+        if (hasInstitutionalDomain) {
+          debugPrint(
+            'AuthService: Institutional domain detected, checking for healthcare context',
+          );
+          // For institutional domains, be more lenient with healthcare detection
+          final healthcareKeywords = [
+            'health',
+            'med',
+            'hospital',
+            'clinic',
+            'care',
+          ];
+          for (final keyword in healthcareKeywords) {
+            if (emailDomain.contains(keyword) ||
+                emailUsername.contains(keyword)) {
+              debugPrint(
+                'AuthService: Healthcare context found in institutional email',
+              );
+              return UserType.hospital;
+            }
+          }
+        }
+
+        debugPrint(
+          'AuthService: No hospital patterns found in institutional domain, defaulting to client',
+        );
+        return UserType.client;
+      }
+    } catch (e) {
+      debugPrint('AuthService: Error detecting user type from email: $e');
+      // Default to client on error
+      return UserType.client;
     }
   }
 
@@ -717,23 +1209,27 @@ class AuthService {
   String _getAuthErrorMessage(String errorCode) {
     switch (errorCode) {
       case 'user-not-found':
-        return 'No user found with this email address.';
+        return 'No account found with this email address. Please check your email or create a new account.';
       case 'wrong-password':
-        return 'Incorrect password.';
+        return 'Incorrect password. Please try again or reset your password.';
       case 'email-already-in-use':
-        return 'An account already exists with this email address.';
+        return 'An account already exists with this email address. Please try logging in instead.';
       case 'weak-password':
-        return 'Password is too weak. Please choose a stronger password.';
+        return 'Password is too weak. Please use at least 8 characters with uppercase, lowercase, and numbers.';
       case 'invalid-email':
-        return 'Invalid email address format.';
+        return 'Please enter a valid email address.';
       case 'user-disabled':
-        return 'This account has been disabled.';
+        return 'This account has been disabled. Please contact support for assistance.';
       case 'too-many-requests':
-        return 'Too many failed attempts. Please try again later.';
+        return 'Too many failed attempts. Please wait a few minutes before trying again.';
       case 'operation-not-allowed':
-        return 'This operation is not allowed.';
+        return 'This operation is not currently allowed. Please try again later.';
+      case 'network-request-failed':
+        return 'Network connection error. Please check your internet connection and try again.';
+      case 'timeout':
+        return 'The request timed out. Please check your connection and try again.';
       default:
-        return 'An error occurred. Please try again.';
+        return 'An unexpected error occurred. Please check your connection and try again.';
     }
   }
 }

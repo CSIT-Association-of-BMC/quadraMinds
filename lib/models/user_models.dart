@@ -95,4 +95,37 @@ class HospitalUser extends BaseUser {
     required this.specializations,
     this.licenseNumber,
   }) : super(userType: UserType.hospital);
+
+  // Convert to Map for local storage
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      ...super.toMap(),
+      'hospitalName': hospitalName,
+      'registrationNumber': registrationNumber,
+      'contactPerson': contactPerson,
+      'phoneNumber': phoneNumber,
+      'address': address,
+      'website': website,
+      'specializations': specializations,
+      'licenseNumber': licenseNumber,
+    };
+  }
+
+  // Create HospitalUser from Map (for local storage retrieval)
+  factory HospitalUser.fromMap(Map<String, dynamic> map) {
+    return HospitalUser(
+      uid: map['uid'],
+      email: map['email'] ?? '',
+      password: '', // Don't store password
+      hospitalName: map['hospitalName'] ?? '',
+      registrationNumber: map['registrationNumber'] ?? '',
+      contactPerson: map['contactPerson'] ?? '',
+      phoneNumber: map['phoneNumber'] ?? '',
+      address: map['address'] ?? '',
+      website: map['website'],
+      specializations: List<String>.from(map['specializations'] ?? []),
+      licenseNumber: map['licenseNumber'],
+    );
+  }
 }

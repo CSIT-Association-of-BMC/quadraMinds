@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'doctor_detail_screen.dart';
+import '../../services/doctor_service.dart';
 
 class DoctorClientScreen extends StatefulWidget {
   const DoctorClientScreen({super.key});

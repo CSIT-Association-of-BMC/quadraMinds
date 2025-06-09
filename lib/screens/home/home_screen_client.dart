@@ -7,8 +7,10 @@ import '../hospital/hospital_screen.dart';
 import '../appointment/your_appointment.dart';
 import '../profile_client/profile_client_screen.dart';
 import '../client_doctor/doctor_client.dart';
+import '../client_records/client_records_screen.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/hospital_doctor_selection_card.dart';
+import '../../widgets/floating_ai_assistant.dart';
 
 class HomeScreenClient extends StatefulWidget {
   final ClientUser? clientUser;
@@ -39,6 +41,11 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   // For unlimited circular carousel
   static const int _carouselItemCount = 4; // Actual number of carousel items
   late List<Map<String, dynamic>> _infiniteCarouselItems;
+
+  // Keys for measuring restricted areas for AI assistant
+  final GlobalKey _healthcareServicesKey = GlobalKey();
+  final GlobalKey _availableServicesKey = GlobalKey();
+  final GlobalKey _availableDoctorsKey = GlobalKey();
 
   @override
   void initState() {
@@ -367,183 +374,254 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     }
   }
 
+  // Calculate restricted bounds for AI assistant
+  Map<String, double?> _calculateRestrictedBounds() {
+    try {
+      double? topBound;
+      double? bottomBound;
+
+      // Get the render boxes for the key sections
+      final healthcareServicesBox =
+          _healthcareServicesKey.currentContext?.findRenderObject()
+              as RenderBox?;
+      final availableDoctorsBox =
+          _availableDoctorsKey.currentContext?.findRenderObject() as RenderBox?;
+
+      if (healthcareServicesBox != null && healthcareServicesBox.hasSize) {
+        final position = healthcareServicesBox.localToGlobal(Offset.zero);
+        topBound = position.dy;
+      }
+
+      if (availableDoctorsBox != null && availableDoctorsBox.hasSize) {
+        final position = availableDoctorsBox.localToGlobal(Offset.zero);
+        final size = availableDoctorsBox.size;
+        bottomBound = position.dy + size.height;
+      }
+
+      return {
+        'top': topBound ?? 100.0, // Fallback to safe top position
+        'bottom':
+            bottomBound ??
+            MediaQuery.of(context).size.height -
+                100.0, // Fallback to safe bottom
+        'left': 16.0, // Match the padding of the main content
+        'right': MediaQuery.of(context).size.width - 16.0, // Match the padding
+      };
+    } catch (e) {
+      // Fallback to safe bounds if any error occurs
+      return {
+        'top': 100.0,
+        'bottom': MediaQuery.of(context).size.height - 100.0,
+        'left': 16.0,
+        'right': MediaQuery.of(context).size.width - 16.0,
+      };
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            // Enhanced Professional Header
-            Container(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 12,
-                left: 16,
-                right: 16,
-                bottom: 16,
-              ),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF667EEA), // Modern blue
-                    Color(0xFF764BA2), // Purple accent
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF667EEA).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+      body: Stack(
+        children: [
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              children: [
+                // Enhanced Professional Header
+                Container(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 12,
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Top row with greeting and location
-                  Row(
-                    children: [
-                      // Left side - Enhanced Greeting
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Good ${_getTimeOfDay()},',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _getGreetingName(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF667EEA), // Modern blue
+                        Color(0xFF764BA2), // Purple accent
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF667EEA).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
-                      // Right side - Enhanced Location
-                      Expanded(
-                        flex: 1,
-                        child: GestureDetector(
-                          onTap: _getCurrentLocation,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                              ),
-                            ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Top row with greeting and location
+                      Row(
+                        children: [
+                          // Left side - Enhanced Greeting
+                          Expanded(
+                            flex: 2,
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.location_on_outlined,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Icon(
-                                      _isLoadingLocation
-                                          ? Icons.refresh
-                                          : Icons.keyboard_arrow_down,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ],
+                                Text(
+                                  'Good ${_getTimeOfDay()},',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w400,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
-                                _isLoadingLocation
-                                    ? const Text(
-                                      'Locating...',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.end,
-                                    )
-                                    : Text(
-                                      _getDisplayLocation(),
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      textAlign: TextAlign.end,
-                                    ),
+                                Text(
+                                  _getGreetingName(),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Main Content with Professional Design
-            Expanded(
-              child: Container(
-                color: const Color(0xFFF5F7FA),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCarouselSlider(),
-                      const SizedBox(height: 16),
-                      _buildBookAppointmentCard(),
-                      const SizedBox(height: 16),
-                      HospitalDoctorSelectionCard(
-                        onHospitalTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HospitalScreen(),
+                          // Right side - Enhanced Location
+                          Expanded(
+                            flex: 1,
+                            child: GestureDetector(
+                              onTap: _getCurrentLocation,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.location_on_outlined,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Icon(
+                                          _isLoadingLocation
+                                              ? Icons.refresh
+                                              : Icons.keyboard_arrow_down,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    _isLoadingLocation
+                                        ? const Text(
+                                          'Locating...',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.end,
+                                        )
+                                        : Text(
+                                          _getDisplayLocation(),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                          textAlign: TextAlign.end,
+                                        ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          );
-                        },
-                        onDoctorTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const DoctorClientScreen(),
-                            ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildAvailableDoctorsSection(),
-                      const SizedBox(height: 80), // Space for bottom nav
                     ],
                   ),
                 ),
-              ),
+
+                // Main Content with Professional Design
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFFF5F7FA),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            key: _healthcareServicesKey,
+                            child: _buildCarouselSlider(),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildBookAppointmentCard(),
+                          const SizedBox(height: 16),
+                          Container(
+                            key: _availableServicesKey,
+                            child: HospitalDoctorSelectionCard(
+                              onHospitalTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const HospitalScreen(),
+                                  ),
+                                );
+                              },
+                              onDoctorTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const DoctorClientScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            key: _availableDoctorsKey,
+                            child: _buildAvailableDoctorsSection(),
+                          ),
+                          const SizedBox(height: 80), // Space for bottom nav
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Floating Assistant Icon with restricted area
+          Builder(
+            builder: (context) {
+              final bounds = _calculateRestrictedBounds();
+              return FloatingAIAssistant(
+                restrictedTop: bounds['top'],
+                restrictedBottom: bounds['bottom'],
+                restrictedLeft: bounds['left'],
+                restrictedRight: bounds['right'],
+              );
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
@@ -1094,6 +1172,24 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         if (index == 1) {
           // Lab Tests tab
           _showLabTestOptions();
+        } else if (index == 3) {
+          // Records tab
+          if (widget.clientUser != null) {
+            Navigator.push(
+              context,
+              FadeSlidePageRoute(
+                child: ClientRecordsScreen(clientUser: widget.clientUser!),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please log in to view your records'),
+                backgroundColor: Color(0xFFDC2626),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         } else if (index == 4) {
           // Profile tab
           if (widget.clientUser != null) {
@@ -1154,6 +1250,142 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Show lab test options dialog
+  void _showLabTestOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Lab Tests',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLabTestOption(
+                'Blood Test',
+                'Complete blood count and analysis',
+                Icons.bloodtype,
+                const Color(0xFFDC2626),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'Urine Test',
+                'Comprehensive urine analysis',
+                Icons.science,
+                const Color(0xFF7C3AED),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'X-Ray',
+                'Digital X-ray imaging',
+                Icons.medical_services,
+                const Color(0xFF059669),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'ECG',
+                'Electrocardiogram test',
+                Icons.monitor_heart,
+                const Color(0xFFEA580C),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  color: Color(0xFF667EEA),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLabTestOption(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title booking feature coming soon!'),
+            backgroundColor: color,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
           ],
         ),
       ),

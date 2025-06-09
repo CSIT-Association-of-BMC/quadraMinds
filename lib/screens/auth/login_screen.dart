@@ -3,9 +3,11 @@ import 'register_screen.dart';
 import 'reset_password_screen.dart';
 import '../../utils/page_transitions.dart';
 import '../../services/auth_service.dart';
+import '../../services/auth_state_service.dart';
 import '../../models/user_type.dart';
 import '../../models/user_models.dart';
 import '../home/home_screen_client.dart';
+import '../hospital_main/home/home_screen_hospital.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   final AuthService _authService = AuthService();
+  final AuthStateService _authStateService = AuthStateService();
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -102,10 +105,28 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (mounted) {
           if (result['success']) {
-            debugPrint('LoginScreen: Login successful, getting user type...');
-            // Get user type to navigate to appropriate screen
-            final userType = await _authService.getUserType(result['user'].uid);
-            debugPrint('LoginScreen: User type: $userType');
+            debugPrint('LoginScreen: Login successful, detecting user type...');
+            // Enhanced user type detection using email-based detection
+            final userEmail =
+                result['user'].email ?? _emailController.text.trim();
+            var userType = await _authService.detectUserTypeFromEmail(
+              userEmail,
+            );
+            debugPrint('LoginScreen: Detected user type: ${userType?.name}');
+
+            // Fallback to stored user type if detection fails
+            if (userType == null) {
+              userType = await _authService.getUserType(result['user'].uid);
+              debugPrint(
+                'LoginScreen: Fallback user type from storage: $userType',
+              );
+            }
+
+            // Final fallback to client if still null
+            if (userType == null) {
+              debugPrint('LoginScreen: Defaulting to client user type');
+              userType = UserType.client;
+            }
 
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -142,58 +163,84 @@ class _LoginScreenState extends State<LoginScreen>
                 debugPrint(
                   'LoginScreen: Created ClientUser with name: "${clientUser.firstName}" "${clientUser.lastName}"',
                 );
-                debugPrint(
-                  'LoginScreen: ClientUser details - Email: ${clientUser.email}, UID: ${clientUser.uid}',
-                );
 
-                // Validate that we have proper user data
-                if (clientUser.firstName.isEmpty &&
-                    clientUser.lastName.isEmpty) {
+                // Save client authentication state
+                try {
+                  await _authStateService.saveAuthState(user: clientUser);
+                  debugPrint('LoginScreen: Client authentication state saved');
+                } catch (e) {
                   debugPrint(
-                    'LoginScreen: WARNING - Both firstName and lastName are empty!',
+                    'LoginScreen: Failed to save client auth state: $e',
                   );
-                  debugPrint(
-                    'LoginScreen: This will cause the greeting to show "Mr. Guest"',
-                  );
-                  debugPrint('LoginScreen: Original userData: $userData');
+                  // Continue with navigation even if state saving fails
                 }
 
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  FadeSlidePageRoute(
-                    child: HomeScreenClient(clientUser: clientUser),
-                  ),
-                  (route) => false,
-                );
-              } else {
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    FadeSlidePageRoute(
+                      child: HomeScreenClient(clientUser: clientUser),
+                    ),
+                    (route) => false,
+                  );
+                }
+              } else if (userType == UserType.hospital) {
                 debugPrint(
                   'LoginScreen: Navigating to hospital home screen...',
                 );
-                // For hospitals, create a basic user object with available data
                 final userData = result['userData'];
                 debugPrint('LoginScreen: Hospital user data: $userData');
 
-                // Create a basic ClientUser for hospitals (temporary until hospital screen is created)
-                final hospitalAsClient = ClientUser(
+                final hospitalUser = HospitalUser(
                   uid: result['user'].uid,
                   email: userData['email'] ?? result['user'].email ?? '',
                   password: '', // Don't store password
-                  firstName:
-                      userData['contactPerson'] ??
-                      userData['hospitalName'] ??
-                      'Hospital',
-                  lastName: 'User',
+                  hospitalName: userData['hospitalName'] ?? '',
+                  registrationNumber: userData['registrationNumber'] ?? '',
+                  contactPerson: userData['contactPerson'] ?? '',
                   phoneNumber: userData['phoneNumber'] ?? '',
-                  address: userData['address'],
-                  emergencyContact: null,
+                  address: userData['address'] ?? '',
+                  website: userData['website'],
+                  specializations: List<String>.from(
+                    userData['specializations'] ?? [],
+                  ),
+                  licenseNumber: userData['licenseNumber'],
                 );
 
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  FadeSlidePageRoute(
-                    child: HomeScreenClient(clientUser: hospitalAsClient),
+                // Save hospital authentication state
+                try {
+                  await _authStateService.saveHospitalAuthState(
+                    user: hospitalUser,
+                  );
+                  debugPrint(
+                    'LoginScreen: Hospital authentication state saved',
+                  );
+                } catch (e) {
+                  debugPrint(
+                    'LoginScreen: Failed to save hospital auth state: $e',
+                  );
+                  // Continue with navigation even if state saving fails
+                }
+
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    FadeSlidePageRoute(
+                      child: HomeScreenHospital(hospitalUser: hospitalUser),
+                    ),
+                    (route) => false,
+                  );
+                }
+              } else {
+                debugPrint('LoginScreen: Unknown user type, showing error');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Unable to determine user type. Please try again.',
+                    ),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 5),
                   ),
-                  (route) => false,
                 );
               }
             }

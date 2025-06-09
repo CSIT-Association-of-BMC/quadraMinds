@@ -8,6 +8,8 @@ class HelpCenterScreen extends StatefulWidget {
   State<HelpCenterScreen> createState() => _HelpCenterScreenState();
 }
 
+//this is comment
+
 class _HelpCenterScreenState extends State<HelpCenterScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
@@ -16,35 +18,43 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
   final List<FAQItem> _faqItems = [
     FAQItem(
       question: 'How do I book an appointment?',
-      answer: 'To book an appointment, go to the home screen, select "Find Hospitals" or "Find Doctors", choose your preferred healthcare provider, and tap "Book Appointment". Follow the prompts to select your preferred date and time.',
+      answer:
+          'To book an appointment, go to the home screen, select "Find Hospitals" or "Find Doctors", choose your preferred healthcare provider, and tap "Book Appointment". Follow the prompts to select your preferred date and time.',
     ),
     FAQItem(
       question: 'How can I cancel or reschedule my appointment?',
-      answer: 'You can manage your appointments by going to the "Your Appointments" section from the home screen. There you can view, cancel, or reschedule your upcoming appointments.',
+      answer:
+          'You can manage your appointments by going to the "Your Appointments" section from the home screen. There you can view, cancel, or reschedule your upcoming appointments.',
     ),
     FAQItem(
       question: 'Is my personal information secure?',
-      answer: 'Yes, we take your privacy seriously. All your personal and medical information is encrypted and stored securely. We comply with healthcare data protection standards and never share your information without your consent.',
+      answer:
+          'Yes, we take your privacy seriously. All your personal and medical information is encrypted and stored securely. We comply with healthcare data protection standards and never share your information without your consent.',
     ),
     FAQItem(
       question: 'How do I update my profile information?',
-      answer: 'Go to your Profile screen and tap the edit icon in the top right corner. You can update your personal information, contact details, and emergency contacts from there.',
+      answer:
+          'Go to your Profile screen and tap the edit icon in the top right corner. You can update your personal information, contact details, and emergency contacts from there.',
     ),
     FAQItem(
       question: 'What should I do if I forgot my password?',
-      answer: 'On the login screen, tap "Forgot Password?" and enter your email address. You\'ll receive a password reset link via email. Follow the instructions in the email to create a new password.',
+      answer:
+          'On the login screen, tap "Forgot Password?" and enter your email address. You\'ll receive a password reset link via email. Follow the instructions in the email to create a new password.',
     ),
     FAQItem(
       question: 'How do I enable notifications?',
-      answer: 'Go to Profile > Settings > Notifications to manage your notification preferences. You can enable or disable email, SMS, and push notifications according to your preference.',
+      answer:
+          'Go to Profile > Settings > Notifications to manage your notification preferences. You can enable or disable email, SMS, and push notifications according to your preference.',
     ),
     FAQItem(
       question: 'Can I search for specific doctors or specializations?',
-      answer: 'Yes, you can search for doctors by name, specialization, or hospital. Use the search feature on the home screen or browse through the categories to find the right healthcare provider for your needs.',
+      answer:
+          'Yes, you can search for doctors by name, specialization, or hospital. Use the search feature on the home screen or browse through the categories to find the right healthcare provider for your needs.',
     ),
     FAQItem(
       question: 'How do I contact customer support?',
-      answer: 'You can contact our support team through the "Contact Support" option in your profile, or email us directly at support@swasthyasetu.com. We typically respond within 24 hours.',
+      answer:
+          'You can contact our support team through the "Contact Support" option in your profile, or email us directly at support@swasthyasetu.com. We typically respond within 24 hours.',
     ),
   ];
 
@@ -97,16 +107,16 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
             children: [
               // Quick Actions Section
               _buildQuickActionsSection(),
-              
+
               const SizedBox(height: 24),
-              
+
               // FAQ Section
               _buildSectionTitle('Frequently Asked Questions'),
               const SizedBox(height: 12),
               _buildFAQSection(),
-              
+
               const SizedBox(height: 24),
-              
+
               // Contact Section
               _buildContactSection(),
             ],
@@ -237,16 +247,17 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
         ],
       ),
       child: Column(
-        children: _faqItems.asMap().entries.map((entry) {
-          int index = entry.key;
-          FAQItem item = entry.value;
-          return Column(
-            children: [
-              _buildFAQItem(item),
-              if (index < _faqItems.length - 1) _buildDivider(),
-            ],
-          );
-        }).toList(),
+        children:
+            _faqItems.asMap().entries.map((entry) {
+              int index = entry.key;
+              FAQItem item = entry.value;
+              return Column(
+                children: [
+                  _buildFAQItem(item),
+                  if (index < _faqItems.length - 1) _buildDivider(),
+                ],
+              );
+            }).toList(),
       ),
     );
   }
@@ -366,7 +377,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
       path: 'support@swasthyasetu.com',
       query: 'subject=Support Request&body=Hello, I need help with...',
     );
-    
+
     if (await canLaunchUrl(emailUri)) {
       await launchUrl(emailUri);
     } else {

@@ -853,8 +853,6 @@ class _ProfileClientScreenState extends State<ProfileClientScreen>
     // For now, we'll use a generic URL that can be updated later
     const String playStoreUrl =
         'https://play.google.com/store/apps/details?id=com.swasthyasetu.app';
-    const String appStoreUrl =
-        'https://apps.apple.com/app/swasthya-setu/id123456789';
 
     try {
       // Try Play Store first (can be made platform-specific later)
