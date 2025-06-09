@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/ai_chat_screen.dart';
 
 class FloatingAIAssistant extends StatefulWidget {
   // Add parameters to define the restricted area bounds
@@ -161,84 +162,15 @@ class _FloatingAIAssistantState extends State<FloatingAIAssistant>
   }
 
   void _onTap() {
-    // Optionally, you can trigger a haptic feedback or a subtle animation here
-    // _animationController.forward().then((_) => _animationController.reverse());
-    _showAIAssistantDialog();
-  }
-
-  void _showAIAssistantDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.auto_awesome, color: Color(0xFF667EEA)),
-              SizedBox(width: 8),
-              Text(
-                'AI Assistant',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.8, // Responsive width
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text(
-                  'Hello! How can I assist you today?',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF4B5563)),
-                ),
-                const SizedBox(height: 20),
-                // Add more interactive elements here, like buttons or a text field
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF667EEA),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    // TODO: Implement chat functionality or other actions
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Chat feature coming soon!'),
-                      ),
-                    );
-                  },
-                  child: const Text('Start Chat'),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text(
-                'Close',
-                style: TextStyle(
-                  color: Color(0xFF667EEA),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-          ],
-        );
-      },
+    // Navigate to AI Chat Screen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AIChatScreen(),
+      ),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {

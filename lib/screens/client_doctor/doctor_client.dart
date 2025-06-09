@@ -406,105 +406,12 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
     super.dispose();
   }
 
-  // Doctor data
-  List<DoctorInfo> get _doctors => [
-    DoctorInfo(
-      name: 'Dr. Rajesh Sharma',
-      specialization: 'Cardiologist',
-      qualifications: ['MBBS', 'MD Cardiology', 'FACC'],
-      rating: 4.8,
-      reviewCount: 245,
-      experience: 15,
-      hospital: 'Tribhuvan University Teaching Hospital',
-      consultationFee: 1500,
-      contactNumber: '+977-1-4412303',
-      isAvailable: true,
-      availableSlots: ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM'],
-      imageUrl: null,
-      about:
-          'Experienced cardiologist specializing in interventional cardiology and heart disease prevention.',
-    ),
-    DoctorInfo(
-      name: 'Dr. Sunita Thapa',
-      specialization: 'Pediatrician',
-      qualifications: ['MBBS', 'MD Pediatrics', 'IAP Fellowship'],
-      rating: 4.9,
-      reviewCount: 189,
-      experience: 12,
-      hospital: 'Grande International Hospital',
-      consultationFee: 1200,
-      contactNumber: '+977-1-5159266',
-      isAvailable: true,
-      availableSlots: ['10:00 AM', '1:00 PM', '3:00 PM', '5:00 PM'],
-      imageUrl: null,
-      about:
-          'Dedicated pediatrician with expertise in child development and pediatric emergency care.',
-    ),
-    DoctorInfo(
-      name: 'Dr. Amit Poudel',
-      specialization: 'Orthopedic Surgeon',
-      qualifications: ['MBBS', 'MS Orthopedics', 'AO Fellowship'],
-      rating: 4.7,
-      reviewCount: 156,
-      experience: 18,
-      hospital: 'Norvic International Hospital',
-      consultationFee: 2000,
-      contactNumber: '+977-1-4258554',
-      isAvailable: false,
-      availableSlots: ['9:00 AM', '2:00 PM'],
-      imageUrl: null,
-      about:
-          'Expert orthopedic surgeon specializing in joint replacement and sports medicine.',
-    ),
-    DoctorInfo(
-      name: 'Dr. Priya Maharjan',
-      specialization: 'Dermatologist',
-      qualifications: ['MBBS', 'MD Dermatology', 'IADVL'],
-      rating: 4.6,
-      reviewCount: 203,
-      experience: 10,
-      hospital: 'Patan Hospital',
-      consultationFee: 1000,
-      contactNumber: '+977-1-5522266',
-      isAvailable: true,
-      availableSlots: ['11:00 AM', '1:00 PM', '4:00 PM'],
-      imageUrl: null,
-      about:
-          'Skilled dermatologist focusing on cosmetic dermatology and skin cancer treatment.',
-    ),
-    DoctorInfo(
-      name: 'Dr. Krishna Bahadur',
-      specialization: 'Neurologist',
-      qualifications: ['MBBS', 'DM Neurology', 'European Fellowship'],
-      rating: 4.9,
-      reviewCount: 134,
-      experience: 20,
-      hospital: 'Bir Hospital',
-      consultationFee: 2500,
-      contactNumber: '+977-1-4221119',
-      isAvailable: true,
-      availableSlots: ['10:00 AM', '3:00 PM'],
-      imageUrl: null,
-      about:
-          'Renowned neurologist with expertise in stroke management and epilepsy treatment.',
-    ),
-    DoctorInfo(
-      name: 'Dr. Sita Gurung',
-      specialization: 'Gynecologist',
-      qualifications: ['MBBS', 'MD Gynecology', 'FIGO Certification'],
-      rating: 4.8,
-      reviewCount: 278,
-      experience: 14,
-      hospital: 'Nepal Medical College',
-      consultationFee: 1300,
-      contactNumber: '+977-1-4911008',
-      isAvailable: true,
-      availableSlots: ['9:00 AM', '12:00 PM', '3:00 PM', '5:00 PM'],
-      imageUrl: null,
-      about:
-          'Experienced gynecologist specializing in high-risk pregnancies and minimally invasive surgery.',
-    ),
-  ];
+  // Doctor data - using DoctorService
+  List<DoctorInfo> get _doctors {
+    final doctorService = DoctorService();
+    doctorService.initialize();
+    return doctorService.getActiveDoctors();
+  }
 
   List<DoctorInfo> get _filteredDoctors {
     List<DoctorInfo> filtered = _doctors;
@@ -1283,35 +1190,4 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
   }
 }
 
-// Doctor Info Model
-class DoctorInfo {
-  final String name;
-  final String specialization;
-  final List<String> qualifications;
-  final double rating;
-  final int reviewCount;
-  final int experience;
-  final String hospital;
-  final int consultationFee;
-  final String contactNumber;
-  final bool isAvailable;
-  final List<String> availableSlots;
-  final String? imageUrl;
-  final String about;
 
-  DoctorInfo({
-    required this.name,
-    required this.specialization,
-    required this.qualifications,
-    required this.rating,
-    required this.reviewCount,
-    required this.experience,
-    required this.hospital,
-    required this.consultationFee,
-    required this.contactNumber,
-    required this.isAvailable,
-    required this.availableSlots,
-    this.imageUrl,
-    required this.about,
-  });
-}

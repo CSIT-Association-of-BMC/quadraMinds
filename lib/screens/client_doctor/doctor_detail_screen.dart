@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'doctor_client.dart';
+import '../../services/doctor_service.dart';
 
 class DoctorDetailScreen extends StatefulWidget {
   final DoctorInfo doctor;
