@@ -134,14 +134,25 @@ class _HospitalScreenState extends State<HospitalScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Sort Hospitals'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Filter & Sort Hospitals',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               RadioListTile<String>(
-                title: const Text('Distance'),
+                title: const Text('Distance (Nearest first)'),
                 value: 'distance',
                 groupValue: _sortBy,
+                activeColor: const Color(0xFF1E40AF),
                 onChanged: (value) {
                   setState(() {
                     _sortBy = value!;
@@ -150,9 +161,10 @@ class _HospitalScreenState extends State<HospitalScreen>
                 },
               ),
               RadioListTile<String>(
-                title: const Text('Rating'),
+                title: const Text('Rating (Highest first)'),
                 value: 'rating',
                 groupValue: _sortBy,
+                activeColor: const Color(0xFF1E40AF),
                 onChanged: (value) {
                   setState(() {
                     _sortBy = value!;
@@ -161,9 +173,10 @@ class _HospitalScreenState extends State<HospitalScreen>
                 },
               ),
               RadioListTile<String>(
-                title: const Text('Name'),
+                title: const Text('Name (A-Z)'),
                 value: 'name',
                 groupValue: _sortBy,
+                activeColor: const Color(0xFF1E40AF),
                 onChanged: (value) {
                   setState(() {
                     _sortBy = value!;
@@ -173,6 +186,18 @@ class _HospitalScreenState extends State<HospitalScreen>
               ),
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  color: Color(0xFF1E40AF),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -371,10 +396,10 @@ class _HospitalScreenState extends State<HospitalScreen>
   Widget _buildHeader() {
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 12,
-        left: 16,
-        right: 16,
-        bottom: 16,
+        top: MediaQuery.of(context).padding.top + 20,
+        left: 20,
+        right: 20,
+        bottom: 24,
       ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -401,7 +426,7 @@ class _HospitalScreenState extends State<HospitalScreen>
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -409,70 +434,51 @@ class _HospitalScreenState extends State<HospitalScreen>
                   child: const Icon(
                     Icons.arrow_back,
                     color: Colors.white,
-                    size: 18,
+                    size: 20,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               const Expanded(
                 child: Text(
                   'Hospitals',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: 0.5,
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => _showSortDialog(),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.sort,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
+              // Only favorites button in header now
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showFavoritesOnly = !_showFavoritesOnly;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color:
+                        _showFavoritesOnly
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showFavoritesOnly = !_showFavoritesOnly;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color:
-                            _showFavoritesOnly
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.favorite,
-                        color:
-                            _showFavoritesOnly
-                                ? const Color(0xFF1E40AF)
-                                : Colors.white,
-                        size: 18,
-                      ),
-                    ),
+                  child: Icon(
+                    Icons.favorite,
+                    color:
+                        _showFavoritesOnly
+                            ? const Color(0xFF1E40AF)
+                            : Colors.white,
+                    size: 20,
                   ),
-                ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildSearchBar(),
         ],
       ),
@@ -507,22 +513,48 @@ class _HospitalScreenState extends State<HospitalScreen>
             color: Color(0xFF6B7280),
             size: 20,
           ),
-          suffixIcon:
-              _searchQuery.isNotEmpty
-                  ? GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      setState(() {
-                        _searchQuery = '';
-                      });
-                    },
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Filter icon in search bar
+              GestureDetector(
+                onTap: () => _showSortDialog(),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E40AF).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons
+                        .tune, // Changed from Icons.sort to Icons.tune (filter icon)
+                    color: Color(0xFF1E40AF),
+                    size: 16,
+                  ),
+                ),
+              ),
+              // Clear button (only show when there's text)
+              if (_searchQuery.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    margin: const EdgeInsets.only(right: 8),
                     child: const Icon(
                       Icons.clear,
                       color: Color(0xFF6B7280),
-                      size: 18,
+                      size: 16,
                     ),
-                  )
-                  : null,
+                  ),
+                ),
+            ],
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,

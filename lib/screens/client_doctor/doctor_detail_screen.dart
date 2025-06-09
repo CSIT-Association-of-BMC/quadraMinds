@@ -132,6 +132,8 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen>
                     const SizedBox(height: 24),
                     _buildAvailableSlots(),
                     const SizedBox(height: 24),
+                    _buildOtherDoctors(),
+                    const SizedBox(height: 24),
                     _buildActionButtons(),
                   ],
                 ),
@@ -613,6 +615,271 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen>
         ],
       ),
     );
+  }
+
+  Widget _buildOtherDoctors() {
+    // Get sample doctors data (in a real app, this would come from an API or database)
+    final otherDoctors = _getOtherDoctors();
+
+    if (otherDoctors.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.people_outline,
+                color: Color(0xFF1E40AF),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Other Available Doctors',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Similar specialists in ${widget.doctor.specialization}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 140,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: otherDoctors.length,
+              itemBuilder: (context, index) {
+                final doctor = otherDoctors[index];
+                return Container(
+                  width: 200,
+                  margin: EdgeInsets.only(
+                    right: index < otherDoctors.length - 1 ? 12 : 0,
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF1E40AF).withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  doctor['name'],
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1F2937),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  doctor['specialization'],
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1E40AF),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Color(0xFFFBBF24),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            doctor['rating'].toString(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1F2937),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  doctor['isAvailable']
+                                      ? const Color(
+                                        0xFF10B981,
+                                      ).withValues(alpha: 0.1)
+                                      : const Color(
+                                        0xFFF59E0B,
+                                      ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              doctor['isAvailable'] ? 'Available' : 'Busy',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    doctor['isAvailable']
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFF59E0B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        doctor['hospital'],
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate to this doctor's detail page
+                          // In a real app, you would create a DoctorInfo object and navigate
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('View ${doctor['name']} details'),
+                              backgroundColor: const Color(0xFF1E40AF),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E40AF),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'View Details',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getOtherDoctors() {
+    // Sample data for other doctors in the same specialization
+    // In a real app, this would be fetched from an API or database
+    final currentSpecialization = widget.doctor.specialization;
+
+    final allDoctors = [
+      {
+        'name': 'Dr. Ramesh Adhikari',
+        'specialization': currentSpecialization,
+        'rating': 4.7,
+        'hospital': 'Kathmandu Medical College',
+        'isAvailable': true,
+      },
+      {
+        'name': 'Dr. Sushma Karki',
+        'specialization': currentSpecialization,
+        'rating': 4.8,
+        'hospital': 'B&B Hospital',
+        'isAvailable': false,
+      },
+      {
+        'name': 'Dr. Bikash Shrestha',
+        'specialization': currentSpecialization,
+        'rating': 4.6,
+        'hospital': 'Civil Service Hospital',
+        'isAvailable': true,
+      },
+      {
+        'name': 'Dr. Anita Rai',
+        'specialization': currentSpecialization,
+        'rating': 4.9,
+        'hospital': 'Dhulikhel Hospital',
+        'isAvailable': true,
+      },
+    ];
+
+    // Filter out the current doctor and return up to 3 other doctors
+    return allDoctors
+        .where((doctor) => doctor['name'] != widget.doctor.name)
+        .take(3)
+        .toList();
   }
 
   Widget _buildActionButtons() {

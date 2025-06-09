@@ -621,6 +621,44 @@ class AuthService {
     }
   }
 
+  // Delete user account
+  Future<void> deleteUserAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      debugPrint('AuthService: Attempting to delete user account: ${user.uid}');
+
+      // Get user data to determine collection
+      final userData = await getUserData(user.uid);
+
+      // Delete user data from Firestore
+      if (userData != null) {
+        final userType = userData['userType'];
+        if (userType == 'client') {
+          await _firestore.collection('clients').doc(user.uid).delete();
+          debugPrint('AuthService: Client data deleted from Firestore');
+        } else if (userType == 'hospital') {
+          await _firestore.collection('hospitals').doc(user.uid).delete();
+          debugPrint('AuthService: Hospital data deleted from Firestore');
+        }
+      }
+
+      // Clear local authentication state
+      await _authStateService.clearAuthState();
+      debugPrint('AuthService: Local auth state cleared');
+
+      // Delete Firebase Auth user
+      await user.delete();
+      debugPrint('AuthService: Firebase Auth user deleted successfully');
+    } catch (e) {
+      debugPrint('AuthService: Error deleting user account: $e');
+      rethrow;
+    }
+  }
+
   // Get user type from Firestore
   Future<UserType?> getUserType(String uid) async {
     try {
