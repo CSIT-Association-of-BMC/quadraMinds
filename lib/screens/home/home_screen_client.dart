@@ -7,6 +7,8 @@ import '../hospital/hospital_screen.dart';
 import '../appointment/your_appointment.dart';
 import '../profile_client/profile_client_screen.dart';
 import '../client_doctor/doctor_client.dart';
+import '../client_doctor/doctor_detail_screen.dart';
+import '../client_records/client_records_screen.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/hospital_doctor_selection_card.dart';
 
@@ -865,31 +867,14 @@ class _HomeScreenClientState extends State<HomeScreenClient>
           child: Row(
             children: [
               _buildEnhancedDoctorCard(
-                'Dr. Anish Chaudhary',
-                'Cardiologist',
-                '8:00 AM - 2:00 PM',
-                4.9,
-                '150+ patients',
-                true,
+                _getHomeDoctorData('Dr. Anish Chaudhary'),
               ),
               const SizedBox(width: 12),
               _buildEnhancedDoctorCard(
-                'Dr. Shishir Gautam',
-                'General Medicine',
-                '9:00 AM - 5:00 PM',
-                4.8,
-                '200+ patients',
-                true,
+                _getHomeDoctorData('Dr. Shishir Gautam'),
               ),
               const SizedBox(width: 12),
-              _buildEnhancedDoctorCard(
-                'Dipesh Pandey',
-                'Pediatrician',
-                '10:00 AM - 4:00 PM',
-                4.7,
-                '120+ patients',
-                false,
-              ),
+              _buildEnhancedDoctorCard(_getHomeDoctorData('Dipesh Pandey')),
             ],
           ),
         ),
@@ -897,137 +882,212 @@ class _HomeScreenClientState extends State<HomeScreenClient>
     );
   }
 
-  Widget _buildEnhancedDoctorCard(
-    String name,
-    String specialty,
-    String time,
-    double rating,
-    String patients,
-    bool isAvailable,
-  ) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+  // Get doctor data for home screen display
+  DoctorInfo _getHomeDoctorData(String doctorName) {
+    switch (doctorName) {
+      case 'Dr. Anish Chaudhary':
+        return DoctorInfo(
+          name: 'Dr. Anish Chaudhary',
+          specialization: 'Cardiologist',
+          qualifications: ['MBBS', 'MD Cardiology', 'FACC'],
+          rating: 4.9,
+          reviewCount: 150,
+          experience: 12,
+          hospital: 'Tribhuvan University Teaching Hospital',
+          consultationFee: 1500,
+          contactNumber: '+977-1-4412303',
+          isAvailable: true,
+          availableSlots: ['8:00 AM', '10:00 AM', '1:00 PM', '2:00 PM'],
+          about:
+              'Experienced cardiologist specializing in interventional cardiology and heart disease prevention with over 12 years of practice.',
+        );
+      case 'Dr. Shishir Gautam':
+        return DoctorInfo(
+          name: 'Dr. Shishir Gautam',
+          specialization: 'General Medicine',
+          qualifications: ['MBBS', 'MD Internal Medicine'],
+          rating: 4.8,
+          reviewCount: 200,
+          experience: 10,
+          hospital: 'Grande International Hospital',
+          consultationFee: 1200,
+          contactNumber: '+977-1-5159266',
+          isAvailable: true,
+          availableSlots: ['9:00 AM', '11:00 AM', '3:00 PM', '5:00 PM'],
+          about:
+              'General medicine specialist with expertise in comprehensive healthcare and preventive medicine.',
+        );
+      case 'Dipesh Pandey':
+        return DoctorInfo(
+          name: 'Dipesh Pandey',
+          specialization: 'Pediatrician',
+          qualifications: ['MBBS', 'MD Pediatrics'],
+          rating: 4.7,
+          reviewCount: 120,
+          experience: 8,
+          hospital: 'Norvic International Hospital',
+          consultationFee: 1000,
+          contactNumber: '+977-1-4258554',
+          isAvailable: false,
+          availableSlots: ['10:00 AM', '2:00 PM', '4:00 PM'],
+          about:
+              'Dedicated pediatrician specializing in child healthcare and development with focus on preventive care.',
+        );
+      default:
+        throw Exception('Doctor not found: $doctorName');
+    }
+  }
+
+  Widget _buildEnhancedDoctorCard(DoctorInfo doctor) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DoctorDetailScreen(doctor: doctor),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Doctor avatar and status
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+        );
+      },
+      child: Container(
+        width: 160,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Doctor avatar and status
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  borderRadius: BorderRadius.circular(10),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
-                child: const Icon(Icons.person, color: Colors.white, size: 20),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color:
-                      isAvailable
-                          ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                          : const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isAvailable ? 'Available' : 'Busy',
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
                     color:
-                        isAvailable
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFFF59E0B),
+                        doctor.isAvailable
+                            ? const Color(0xFF10B981).withValues(alpha: 0.1)
+                            : const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    doctor.isAvailable ? 'Available' : 'Busy',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          doctor.isAvailable
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFF59E0B),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Doctor info
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+              ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            specialty,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 10),
+            // Doctor info
+            Text(
+              doctor.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(height: 8),
-          // Rating and patients
-          Row(
-            children: [
-              const Icon(Icons.star, color: Color(0xFFFBBF24), size: 12),
-              const SizedBox(width: 2),
-              Text(
-                rating.toString(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2937),
-                ),
+            const SizedBox(height: 2),
+            Text(
+              doctor.specialization,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  patients,
-                  style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280)),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Time
-          Row(
-            children: [
-              const Icon(Icons.access_time, color: Color(0xFF6B7280), size: 12),
-              const SizedBox(width: 2),
-              Expanded(
-                child: Text(
-                  time,
+            ),
+            const SizedBox(height: 8),
+            // Rating and patients
+            Row(
+              children: [
+                const Icon(Icons.star, color: Color(0xFFFBBF24), size: 12),
+                const SizedBox(width: 2),
+                Text(
+                  doctor.rating.toString(),
                   style: const TextStyle(
-                    fontSize: 9,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F2937),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    '${doctor.reviewCount}+ patients',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF6B7280),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Time slots
+            Row(
+              children: [
+                const Icon(
+                  Icons.access_time,
+                  color: Color(0xFF6B7280),
+                  size: 12,
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: Text(
+                    doctor.availableSlots.isNotEmpty
+                        ? '${doctor.availableSlots.first} - ${doctor.availableSlots.last}'
+                        : 'No slots available',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1094,6 +1154,24 @@ class _HomeScreenClientState extends State<HomeScreenClient>
         if (index == 1) {
           // Lab Tests tab
           _showLabTestOptions();
+        } else if (index == 3) {
+          // Records tab
+          if (widget.clientUser != null) {
+            Navigator.push(
+              context,
+              FadeSlidePageRoute(
+                child: ClientRecordsScreen(clientUser: widget.clientUser!),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please log in to view your records'),
+                backgroundColor: Color(0xFFDC2626),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         } else if (index == 4) {
           // Profile tab
           if (widget.clientUser != null) {

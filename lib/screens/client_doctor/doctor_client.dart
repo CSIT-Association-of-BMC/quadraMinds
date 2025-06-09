@@ -17,10 +17,18 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
 
   String _selectedSpecialty = 'All';
   String _searchQuery = '';
-  String _sortBy = 'rating'; // rating, experience, name, fees
+
   bool _showFavoritesOnly = false;
   Set<String> _favoriteDoctors = {};
   final TextEditingController _searchController = TextEditingController();
+
+  // Advanced filter variables
+  String _selectedExperience = 'All';
+  RangeValues _feeRange = const RangeValues(0, 5000);
+  String _selectedAvailability = 'All';
+  String _selectedHospital = 'All';
+  String _selectedGender = 'All';
+  String _sortBy = 'rating';
 
   @override
   void initState() {
@@ -103,81 +111,6 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
     }
   }
 
-  void _showSortDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Sort Doctors'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<String>(
-                title: const Text('Rating'),
-                value: 'rating',
-                groupValue: _sortBy,
-                onChanged: (value) {
-                  setState(() {
-                    _sortBy = value!;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Experience'),
-                value: 'experience',
-                groupValue: _sortBy,
-                onChanged: (value) {
-                  setState(() {
-                    _sortBy = value!;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Name'),
-                value: 'name',
-                groupValue: _sortBy,
-                onChanged: (value) {
-                  setState(() {
-                    _sortBy = value!;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text('Consultation Fees'),
-                value: 'fees',
-                groupValue: _sortBy,
-                onChanged: (value) {
-                  setState(() {
-                    _sortBy = value!;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  String _getSortLabel() {
-    switch (_sortBy) {
-      case 'rating':
-        return 'Rating';
-      case 'experience':
-        return 'Experience';
-      case 'name':
-        return 'Name';
-      case 'fees':
-        return 'Fees';
-      default:
-        return 'Sort';
-    }
-  }
-
   void _showAdvancedFilters() {
     showModalBottomSheet(
       context: context,
@@ -224,8 +157,6 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildFilterSection('Sort By', _buildSortOptions()),
-                      const SizedBox(height: 20),
                       _buildFilterSection(
                         'Availability',
                         _buildAvailabilityFilter(),
@@ -240,6 +171,12 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
                         'Consultation Fee',
                         _buildFeeFilter(),
                       ),
+                      const SizedBox(height: 20),
+                      _buildFilterSection('Hospital', _buildHospitalFilter()),
+                      const SizedBox(height: 20),
+                      _buildFilterSection('Gender', _buildGenderFilter()),
+                      const SizedBox(height: 20),
+                      _buildFilterSection('Sort By', _buildSortFilter()),
                     ],
                   ),
                 ),
@@ -256,10 +193,15 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
                         onPressed: () {
                           setState(() {
                             _selectedSpecialty = 'All';
-                            _sortBy = 'rating';
                             _showFavoritesOnly = false;
                             _searchQuery = '';
                             _searchController.clear();
+                            _selectedExperience = 'All';
+                            _feeRange = const RangeValues(0, 5000);
+                            _selectedAvailability = 'All';
+                            _selectedHospital = 'All';
+                            _selectedGender = 'All';
+                            _sortBy = 'rating';
                           });
                           Navigator.pop(context);
                         },
@@ -315,87 +257,192 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
     );
   }
 
-  Widget _buildSortOptions() {
-    final sortOptions = [
-      {'label': 'Rating', 'value': 'rating'},
-      {'label': 'Experience', 'value': 'experience'},
-      {'label': 'Name', 'value': 'name'},
-      {'label': 'Consultation Fees', 'value': 'fees'},
-    ];
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children:
-          sortOptions.map((option) {
-            final isSelected = _sortBy == option['value'];
-            return GestureDetector(
-              onTap: () {
+  Widget _buildAvailabilityFilter() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              value: _showFavoritesOnly,
+              onChanged: (value) {
                 setState(() {
-                  _sortBy = option['value'] as String;
+                  _showFavoritesOnly = value ?? false;
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      isSelected ? const Color(0xFF1E40AF) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color:
-                        isSelected
-                            ? const Color(0xFF1E40AF)
-                            : const Color(0xFFE5E7EB),
-                  ),
-                ),
-                child: Text(
-                  option['label'] as String,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-    );
-  }
-
-  Widget _buildAvailabilityFilter() {
-    return Row(
-      children: [
-        Checkbox(
-          value: _showFavoritesOnly,
-          onChanged: (value) {
+              activeColor: const Color(0xFF1E40AF),
+            ),
+            const Text(
+              'Show only favorites',
+              style: TextStyle(color: Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildDropdownFilter(
+          'Availability Status',
+          _selectedAvailability,
+          ['All', 'Available', 'Busy'],
+          (value) {
             setState(() {
-              _showFavoritesOnly = value ?? false;
+              _selectedAvailability = value!;
             });
           },
-          activeColor: const Color(0xFF1E40AF),
-        ),
-        const Text(
-          'Show only favorites',
-          style: TextStyle(color: Color(0xFF6B7280)),
         ),
       ],
     );
   }
 
   Widget _buildExperienceFilter() {
-    return const Text(
-      'Experience filter coming soon...',
-      style: TextStyle(color: Color(0xFF6B7280), fontStyle: FontStyle.italic),
+    return _buildDropdownFilter(
+      'Years of Experience',
+      _selectedExperience,
+      ['All', '0-5 years', '5-10 years', '10-15 years', '15+ years'],
+      (value) {
+        setState(() {
+          _selectedExperience = value!;
+        });
+      },
     );
   }
 
   Widget _buildFeeFilter() {
-    return const Text(
-      'Fee range filter coming soon...',
-      style: TextStyle(color: Color(0xFF6B7280), fontStyle: FontStyle.italic),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Fee Range: Rs. ${_feeRange.start.round()} - Rs. ${_feeRange.end.round()}',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 8),
+        RangeSlider(
+          values: _feeRange,
+          min: 0,
+          max: 5000,
+          divisions: 50,
+          activeColor: const Color(0xFF1E40AF),
+          inactiveColor: const Color(0xFF1E40AF).withValues(alpha: 0.3),
+          labels: RangeLabels(
+            'Rs. ${_feeRange.start.round()}',
+            'Rs. ${_feeRange.end.round()}',
+          ),
+          onChanged: (values) {
+            setState(() {
+              _feeRange = values;
+            });
+          },
+        ),
+      ],
     );
+  }
+
+  Widget _buildDropdownFilter(
+    String label,
+    String currentValue,
+    List<String> options,
+    ValueChanged<String?> onChanged,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: currentValue,
+              isExpanded: true,
+              items:
+                  options.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHospitalFilter() {
+    final hospitals = [
+      'All',
+      'Tribhuvan University Teaching Hospital',
+      'Grande International Hospital',
+      'Norvic International Hospital',
+      'Patan Hospital',
+      'Bir Hospital',
+      'Nepal Medical College',
+    ];
+
+    return _buildDropdownFilter('Hospital', _selectedHospital, hospitals, (
+      value,
+    ) {
+      setState(() {
+        _selectedHospital = value!;
+      });
+    });
+  }
+
+  Widget _buildGenderFilter() {
+    return _buildDropdownFilter(
+      'Doctor Gender',
+      _selectedGender,
+      ['All', 'Male', 'Female'],
+      (value) {
+        setState(() {
+          _selectedGender = value!;
+        });
+      },
+    );
+  }
+
+  Widget _buildSortFilter() {
+    return _buildDropdownFilter(
+      'Sort By',
+      _sortBy,
+      ['rating', 'experience', 'name', 'fees'],
+      (value) {
+        setState(() {
+          _sortBy = value!;
+        });
+      },
+    );
+  }
+
+  bool _hasActiveFilters() {
+    return _selectedExperience != 'All' ||
+        _feeRange.start != 0 ||
+        _feeRange.end != 5000 ||
+        _selectedAvailability != 'All' ||
+        _selectedHospital != 'All' ||
+        _selectedGender != 'All' ||
+        _sortBy != 'rating';
   }
 
   @override
@@ -543,7 +590,75 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
               .toList();
     }
 
-    // Sort doctors
+    // Filter by experience
+    if (_selectedExperience != 'All') {
+      filtered =
+          filtered.where((doctor) {
+            switch (_selectedExperience) {
+              case '0-5 years':
+                return doctor.experience <= 5;
+              case '5-10 years':
+                return doctor.experience > 5 && doctor.experience <= 10;
+              case '10-15 years':
+                return doctor.experience > 10 && doctor.experience <= 15;
+              case '15+ years':
+                return doctor.experience > 15;
+              default:
+                return true;
+            }
+          }).toList();
+    }
+
+    // Filter by consultation fee range
+    filtered =
+        filtered.where((doctor) {
+          return doctor.consultationFee >= _feeRange.start &&
+              doctor.consultationFee <= _feeRange.end;
+        }).toList();
+
+    // Filter by availability
+    if (_selectedAvailability != 'All') {
+      filtered =
+          filtered.where((doctor) {
+            switch (_selectedAvailability) {
+              case 'Available':
+                return doctor.isAvailable;
+              case 'Busy':
+                return !doctor.isAvailable;
+              default:
+                return true;
+            }
+          }).toList();
+    }
+
+    // Filter by hospital
+    if (_selectedHospital != 'All') {
+      filtered =
+          filtered
+              .where((doctor) => doctor.hospital == _selectedHospital)
+              .toList();
+    }
+
+    // Filter by gender (assuming we add gender to doctor data)
+    if (_selectedGender != 'All') {
+      filtered =
+          filtered.where((doctor) {
+            // For now, we'll use a simple logic based on name patterns
+            // In a real app, this would be a proper field in the doctor model
+            if (_selectedGender == 'Female') {
+              return doctor.name.contains('Dr. Sunita') ||
+                  doctor.name.contains('Dr. Priya') ||
+                  doctor.name.contains('Dr. Sita');
+            } else if (_selectedGender == 'Male') {
+              return !doctor.name.contains('Dr. Sunita') &&
+                  !doctor.name.contains('Dr. Priya') &&
+                  !doctor.name.contains('Dr. Sita');
+            }
+            return true;
+          }).toList();
+    }
+
+    // Apply sorting
     switch (_sortBy) {
       case 'rating':
         filtered.sort((a, b) => b.rating.compareTo(a.rating));
@@ -605,20 +720,15 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
           // Header with back button and title
           Row(
             children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 18,
-                  ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 24,
                 ),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -632,50 +742,30 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => _showAdvancedFilters(),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.tune,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showFavoritesOnly = !_showFavoritesOnly;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color:
+                        _showFavoritesOnly
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showFavoritesOnly = !_showFavoritesOnly;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color:
-                            _showFavoritesOnly
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.favorite,
-                        color:
-                            _showFavoritesOnly
-                                ? const Color(0xFF1E40AF)
-                                : Colors.white,
-                        size: 18,
-                      ),
-                    ),
+                  child: Icon(
+                    Icons.favorite,
+                    color:
+                        _showFavoritesOnly
+                            ? const Color(0xFF1E40AF)
+                            : Colors.white,
+                    size: 18,
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -701,74 +791,76 @@ class _DoctorClientScreenState extends State<DoctorClientScreen>
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Search doctors, specializations, hospitals...',
-                hintStyle: const TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 14,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: Color(0xFF6B7280),
-                  size: 20,
-                ),
-                suffixIcon:
-                    _searchQuery.isNotEmpty
-                        ? GestureDetector(
-                          onTap: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                          child: const Icon(
-                            Icons.clear,
-                            color: Color(0xFF6B7280),
-                            size: 18,
-                          ),
-                        )
-                        : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-            ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        decoration: InputDecoration(
+          hintText: 'Search doctors, specializations, hospitals...',
+          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Color(0xFF6B7280),
+            size: 20,
           ),
-          Container(height: 40, width: 1, color: const Color(0xFFE5E7EB)),
-          GestureDetector(
-            onTap: () => _showSortDialog(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.sort, color: Color(0xFF6B7280), size: 18),
-                  const SizedBox(width: 4),
-                  Text(
-                    _getSortLabel(),
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_searchQuery.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  child: const Icon(
+                    Icons.clear,
+                    color: Color(0xFF6B7280),
+                    size: 18,
                   ),
-                ],
+                ),
+              if (_searchQuery.isNotEmpty) const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _showAdvancedFilters(),
+                child: Stack(
+                  children: [
+                    Icon(
+                      Icons.filter_list,
+                      color:
+                          _hasActiveFilters()
+                              ? const Color(0xFF1E40AF)
+                              : const Color(0xFF6B7280),
+                      size: 20,
+                    ),
+                    if (_hasActiveFilters())
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+            ],
           ),
-        ],
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
       ),
     );
   }

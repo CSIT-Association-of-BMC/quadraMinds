@@ -78,7 +78,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           'Edit Profile',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: const Color(0xFF2E7D32),
+        backgroundColor: const Color(0xFF1565C0),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -99,7 +99,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           _isLoading
               ? const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1565C0)),
                 ),
               )
               : FadeTransition(
@@ -171,11 +171,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF2E7D32), Color(0xFF388E3C)],
+                    colors: [Color(0xFF1565C0), Color(0xFF1976D2)],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+                      color: const Color(0xFF1565C0).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -217,7 +217,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Photo upload - Coming Soon!'),
-                          backgroundColor: Color(0xFF2E7D32),
+                          backgroundColor: Color(0xFF1565C0),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -225,7 +225,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     icon: const Icon(
                       Icons.camera_alt,
                       size: 14,
-                      color: Color(0xFF2E7D32),
+                      color: Color(0xFF1565C0),
                     ),
                   ),
                 ),
@@ -423,7 +423,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(fontSize: 14),
-        prefixIcon: Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+        prefixIcon: Icon(icon, color: const Color(0xFF1565C0), size: 20),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 10,
           vertical: 10,
@@ -435,7 +435,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+          borderSide: const BorderSide(color: Color(0xFF1565C0)),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -463,7 +463,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ),
         child: Row(
           children: [
-            const Icon(Icons.cake_outlined, color: Color(0xFF2E7D32), size: 20),
+            const Icon(Icons.cake_outlined, color: Color(0xFF1565C0), size: 20),
             const SizedBox(width: 10),
             Flexible(
               child: Column(
@@ -518,7 +518,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2E7D32),
+              primary: Color(0xFF1565C0),
               onPrimary: Colors.white,
               surface: Colors.white,
               onSurface: Color(0xFF1F2937),
@@ -584,7 +584,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
-            backgroundColor: Color(0xFF2E7D32),
+            backgroundColor: Color(0xFF1565C0),
             behavior: SnackBarBehavior.floating,
           ),
         );
