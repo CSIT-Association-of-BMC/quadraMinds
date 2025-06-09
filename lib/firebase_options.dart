@@ -61,6 +61,7 @@ class DefaultFirebaseOptions {
     appId: '1:403647213215:android:1763b0c42014ce8f687caa',
     messagingSenderId: '403647213215',
     projectId: 'swasthya-setu-3dc5e',
+    authDomain: 'swasthya-setu-3dc5e.firebaseapp.com',
     storageBucket: 'swasthya-setu-3dc5e.firebasestorage.app',
   );
 
@@ -69,8 +70,8 @@ class DefaultFirebaseOptions {
     appId: '1:403647213215:ios:3c0fcae70573e160687caa',
     messagingSenderId: '403647213215',
     projectId: 'swasthya-setu-3dc5e',
+    authDomain: 'swasthya-setu-3dc5e.firebaseapp.com',
     storageBucket: 'swasthya-setu-3dc5e.firebasestorage.app',
     iosBundleId: 'com.example.swasthyaSetu',
   );
-
 }

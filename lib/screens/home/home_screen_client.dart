@@ -9,6 +9,7 @@ import '../profile_client/profile_client_screen.dart';
 import '../client_doctor/doctor_client.dart';
 import '../../utils/page_transitions.dart';
 import '../../widgets/hospital_doctor_selection_card.dart';
+import '../../widgets/floating_ai_assistant.dart';
 
 class HomeScreenClient extends StatefulWidget {
   final ClientUser? clientUser;
@@ -371,179 +372,186 @@ class _HomeScreenClientState extends State<HomeScreenClient>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            // Enhanced Professional Header
-            Container(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 12,
-                left: 16,
-                right: 16,
-                bottom: 16,
-              ),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF667EEA), // Modern blue
-                    Color(0xFF764BA2), // Purple accent
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF667EEA).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+      body: Stack(
+        children: [
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              children: [
+                // Enhanced Professional Header
+                Container(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 12,
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Top row with greeting and location
-                  Row(
-                    children: [
-                      // Left side - Enhanced Greeting
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Good ${_getTimeOfDay()},',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _getGreetingName(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF667EEA), // Modern blue
+                        Color(0xFF764BA2), // Purple accent
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF667EEA).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
-                      // Right side - Enhanced Location
-                      Expanded(
-                        flex: 1,
-                        child: GestureDetector(
-                          onTap: _getCurrentLocation,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                              ),
-                            ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Top row with greeting and location
+                      Row(
+                        children: [
+                          // Left side - Enhanced Greeting
+                          Expanded(
+                            flex: 2,
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.location_on_outlined,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Icon(
-                                      _isLoadingLocation
-                                          ? Icons.refresh
-                                          : Icons.keyboard_arrow_down,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ],
+                                Text(
+                                  'Good ${_getTimeOfDay()},',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w400,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
-                                _isLoadingLocation
-                                    ? const Text(
-                                      'Locating...',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.end,
-                                    )
-                                    : Text(
-                                      _getDisplayLocation(),
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                      textAlign: TextAlign.end,
-                                    ),
+                                Text(
+                                  _getGreetingName(),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Main Content with Professional Design
-            Expanded(
-              child: Container(
-                color: const Color(0xFFF5F7FA),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCarouselSlider(),
-                      const SizedBox(height: 16),
-                      _buildBookAppointmentCard(),
-                      const SizedBox(height: 16),
-                      HospitalDoctorSelectionCard(
-                        onHospitalTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HospitalScreen(),
+                          // Right side - Enhanced Location
+                          Expanded(
+                            flex: 1,
+                            child: GestureDetector(
+                              onTap: _getCurrentLocation,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.location_on_outlined,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Icon(
+                                          _isLoadingLocation
+                                              ? Icons.refresh
+                                              : Icons.keyboard_arrow_down,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    _isLoadingLocation
+                                        ? const Text(
+                                          'Locating...',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.end,
+                                        )
+                                        : Text(
+                                          _getDisplayLocation(),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                          textAlign: TextAlign.end,
+                                        ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          );
-                        },
-                        onDoctorTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const DoctorClientScreen(),
-                            ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildAvailableDoctorsSection(),
-                      const SizedBox(height: 80), // Space for bottom nav
                     ],
                   ),
                 ),
-              ),
+
+                // Main Content with Professional Design
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFFF5F7FA),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildCarouselSlider(),
+                          const SizedBox(height: 16),
+                          _buildBookAppointmentCard(),
+                          const SizedBox(height: 16),
+                          HospitalDoctorSelectionCard(
+                            onHospitalTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HospitalScreen(),
+                                ),
+                              );
+                            },
+                            onDoctorTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => const DoctorClientScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildAvailableDoctorsSection(),
+                          const SizedBox(height: 80), // Space for bottom nav
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          // Meta AI-style Floating Assistant Icon
+          const FloatingAIAssistant(),
+        ],
       ),
       bottomNavigationBar: _buildBottomNavigation(),
     );
@@ -1154,6 +1162,142 @@ class _HomeScreenClientState extends State<HomeScreenClient>
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Show lab test options dialog
+  void _showLabTestOptions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Lab Tests',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLabTestOption(
+                'Blood Test',
+                'Complete blood count and analysis',
+                Icons.bloodtype,
+                const Color(0xFFDC2626),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'Urine Test',
+                'Comprehensive urine analysis',
+                Icons.science,
+                const Color(0xFF7C3AED),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'X-Ray',
+                'Digital X-ray imaging',
+                Icons.medical_services,
+                const Color(0xFF059669),
+              ),
+              const SizedBox(height: 12),
+              _buildLabTestOption(
+                'ECG',
+                'Electrocardiogram test',
+                Icons.monitor_heart,
+                const Color(0xFFEA580C),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  color: Color(0xFF667EEA),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLabTestOption(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title booking feature coming soon!'),
+            backgroundColor: color,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
           ],
         ),
       ),

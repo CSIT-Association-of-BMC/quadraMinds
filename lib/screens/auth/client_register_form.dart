@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/user_models.dart';
 import '../../utils/page_transitions.dart';
+import '../../utils/performance_monitor.dart';
 import '../home/home_screen_client.dart';
 import '../../services/auth_service.dart';
 
@@ -154,12 +155,16 @@ class _ClientRegisterFormState extends State<ClientRegisterForm>
     }
 
     debugPrint('ClientRegisterForm: Starting registration process...');
+
+    // Start performance monitoring
+    PerformanceMonitor.startTimer('client_registration');
+
     setState(() {
       _isLoading = true;
     });
 
-    // Safety timer to prevent infinite loading (60 seconds max)
-    _loadingTimer = Timer(const Duration(seconds: 60), () {
+    // Safety timer to prevent infinite loading (20 seconds max for reliable registration)
+    _loadingTimer = Timer(const Duration(seconds: 20), () {
       if (mounted && _isLoading) {
         debugPrint(
           'ClientRegisterForm: Safety timer triggered - stopping loading',
@@ -169,9 +174,11 @@ class _ClientRegisterFormState extends State<ClientRegisterForm>
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration timed out. Please try again.'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 4),
+            content: Text(
+              'Registration is taking longer than expected. Please check your internet connection and try again.',
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 5),
           ),
         );
       }
@@ -198,17 +205,21 @@ class _ClientRegisterFormState extends State<ClientRegisterForm>
 
       debugPrint('ClientRegisterForm: Calling AuthService.registerClient...');
 
-      // Register with Firebase with timeout
+      // Register with Firebase with reasonable timeout (15 seconds)
       final result = await _authService
           .registerClient(clientUser: clientUser)
           .timeout(
-            const Duration(seconds: 45), // Increased timeout
+            const Duration(
+              seconds: 15,
+            ), // Reasonable timeout for reliable registration
             onTimeout: () {
-              debugPrint('ClientRegisterForm: Registration timed out');
+              debugPrint(
+                'ClientRegisterForm: Registration timed out after 15 seconds',
+              );
               return {
                 'success': false,
                 'error':
-                    'Registration timed out. Please check your internet connection and try again.',
+                    'Registration is taking longer than expected. Please check your internet connection and try again.',
               };
             },
           );
@@ -226,14 +237,25 @@ class _ClientRegisterFormState extends State<ClientRegisterForm>
         });
 
         if (result['success']) {
-          debugPrint(
-            'ClientRegisterForm: Registration successful, showing success message',
+          // Stop performance monitoring and check if within target
+          final registrationTime = PerformanceMonitor.stopTimer(
+            'client_registration',
           );
+          final isWithinTarget = PerformanceMonitor.isWithinTarget(
+            'client_registration',
+            15000, // Updated target to match new timeout
+          );
+
+          debugPrint(
+            'ClientRegisterForm: Registration successful in ${registrationTime}ms (target: <15000ms, achieved: $isWithinTarget)',
+          );
+
+          // Show success message briefly before navigation
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Client registration successful!'),
+              content: Text('Account created successfully! Welcome!'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              duration: Duration(seconds: 1),
             ),
           );
 
@@ -250,35 +272,76 @@ class _ClientRegisterFormState extends State<ClientRegisterForm>
             emergencyContact: clientUser.emergencyContact,
           );
 
-          // Small delay to show success message
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          // Navigate to client home screen
+          // Navigate to client home screen after brief delay to show success message
           if (mounted) {
             debugPrint('ClientRegisterForm: Navigating to home screen');
-            Navigator.pushAndRemoveUntil(
-              context,
-              FadeSlidePageRoute(
-                child: HomeScreenClient(clientUser: registeredUser),
-              ),
-              (route) => false,
-            );
+            // Small delay to let user see success message
+            Future.delayed(const Duration(milliseconds: 800), () {
+              if (mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  FadeSlidePageRoute(
+                    child: HomeScreenClient(clientUser: registeredUser),
+                  ),
+                  (route) => false,
+                );
+              }
+            });
           }
         } else {
-          debugPrint(
-            'ClientRegisterForm: Registration failed: ${result['error']}',
+          // Stop performance monitoring for failed registration
+          final registrationTime = PerformanceMonitor.stopTimer(
+            'client_registration',
           );
+
+          debugPrint(
+            'ClientRegisterForm: Registration failed in ${registrationTime}ms: ${result['error']}',
+          );
+
+          // Show more user-friendly error messages
+          String errorMessage = result['error'] ?? 'Registration failed';
+          if (errorMessage.contains('email-already-in-use')) {
+            errorMessage =
+                'An account with this email already exists. Please try logging in instead.';
+          } else if (errorMessage.contains('weak-password')) {
+            errorMessage =
+                'Password is too weak. Please choose a stronger password.';
+          } else if (errorMessage.contains('invalid-email')) {
+            errorMessage = 'Please enter a valid email address.';
+          } else if (errorMessage.contains('network')) {
+            errorMessage =
+                'Network error. Please check your internet connection and try again.';
+          } else if (errorMessage.contains('timeout')) {
+            errorMessage =
+                'Registration is taking longer than expected. Please check your connection and try again.';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['error'] ?? 'Registration failed'),
+              content: Text(errorMessage),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: () {
+                  // Clear the snackbar and allow user to try again
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
             ),
           );
         }
       }
     } catch (e) {
-      debugPrint('ClientRegisterForm: Exception caught: $e');
+      // Stop performance monitoring for exception
+      final registrationTime = PerformanceMonitor.stopTimer(
+        'client_registration',
+      );
+
+      debugPrint(
+        'ClientRegisterForm: Exception caught after ${registrationTime}ms: $e',
+      );
       if (mounted) {
         // Cancel the safety timer
         _loadingTimer?.cancel();
@@ -287,11 +350,29 @@ class _ClientRegisterFormState extends State<ClientRegisterForm>
           _isLoading = false;
         });
 
+        // Show more user-friendly error message for exceptions
+        String errorMessage = 'An unexpected error occurred. Please try again.';
+        if (e.toString().contains('network') ||
+            e.toString().contains('connection')) {
+          errorMessage =
+              'Network connection error. Please check your internet and try again.';
+        } else if (e.toString().contains('timeout')) {
+          errorMessage =
+              'The request timed out. Please check your connection and try again.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('An unexpected error occurred: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            content: Text(errorMessage),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
           ),
         );
       }

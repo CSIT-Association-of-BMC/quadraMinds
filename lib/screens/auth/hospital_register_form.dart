@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/user_models.dart';
 import '../../services/auth_service.dart';
+import '../../utils/page_transitions.dart';
+import '../hospital_main/home/home_screen_hospital.dart';
 
 class HospitalRegisterForm extends StatefulWidget {
   const HospitalRegisterForm({super.key});
@@ -224,10 +226,19 @@ class _HospitalRegisterFormState extends State<HospitalRegisterForm>
                   : _licenseNumberController.text.trim(),
         );
 
-        // Register with Firebase
-        final result = await _authService.registerHospital(
-          hospitalUser: hospitalUser,
-        );
+        // Register with Firebase with timeout
+        final result = await _authService
+            .registerHospital(hospitalUser: hospitalUser)
+            .timeout(
+              const Duration(seconds: 15),
+              onTimeout: () {
+                return {
+                  'success': false,
+                  'error':
+                      'Registration is taking longer than expected. Please check your connection and try again.',
+                };
+              },
+            );
 
         setState(() {
           _isLoading = false;
@@ -239,15 +250,70 @@ class _HospitalRegisterFormState extends State<HospitalRegisterForm>
               const SnackBar(
                 content: Text('Hospital registration successful!'),
                 backgroundColor: Colors.green,
+                duration: Duration(seconds: 1),
               ),
             );
-            // Navigate back to login
-            Navigator.popUntil(context, (route) => route.isFirst);
+
+            // Create HospitalUser with UID for navigation
+            final hospitalUserWithUid = HospitalUser(
+              uid: result['user'].uid,
+              email: hospitalUser.email,
+              password: '', // Don't store password
+              hospitalName: hospitalUser.hospitalName,
+              registrationNumber: hospitalUser.registrationNumber,
+              contactPerson: hospitalUser.contactPerson,
+              phoneNumber: hospitalUser.phoneNumber,
+              address: hospitalUser.address,
+              website: hospitalUser.website,
+              specializations: hospitalUser.specializations,
+              licenseNumber: hospitalUser.licenseNumber,
+            );
+
+            // Navigate to hospital home screen after brief delay
+            Future.delayed(const Duration(milliseconds: 800), () {
+              if (mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  FadeSlidePageRoute(
+                    child: HomeScreenHospital(
+                      hospitalUser: hospitalUserWithUid,
+                    ),
+                  ),
+                  (route) => false,
+                );
+              }
+            });
           } else {
+            // Show more user-friendly error messages
+            String errorMessage = result['error'] ?? 'Registration failed';
+            if (errorMessage.contains('email-already-in-use')) {
+              errorMessage =
+                  'An account with this email already exists. Please try logging in instead.';
+            } else if (errorMessage.contains('weak-password')) {
+              errorMessage =
+                  'Password is too weak. Please choose a stronger password.';
+            } else if (errorMessage.contains('invalid-email')) {
+              errorMessage = 'Please enter a valid email address.';
+            } else if (errorMessage.contains('network')) {
+              errorMessage =
+                  'Network error. Please check your internet connection and try again.';
+            } else if (errorMessage.contains('timeout')) {
+              errorMessage =
+                  'Registration is taking longer than expected. Please check your connection and try again.';
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result['error'] ?? 'Registration failed'),
+                content: Text(errorMessage),
                 backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Retry',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  },
+                ),
               ),
             );
           }
@@ -258,10 +324,30 @@ class _HospitalRegisterFormState extends State<HospitalRegisterForm>
         });
 
         if (mounted) {
+          // Show more user-friendly error message for exceptions
+          String errorMessage =
+              'An unexpected error occurred. Please try again.';
+          if (e.toString().contains('network') ||
+              e.toString().contains('connection')) {
+            errorMessage =
+                'Network connection error. Please check your internet and try again.';
+          } else if (e.toString().contains('timeout')) {
+            errorMessage =
+                'The request timed out. Please check your connection and try again.';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('An unexpected error occurred'),
-              backgroundColor: Colors.red,
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                },
+              ),
             ),
           );
         }

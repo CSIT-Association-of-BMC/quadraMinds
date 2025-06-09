@@ -566,6 +566,44 @@ class AuthService {
     }
   }
 
+  // Get current authenticated hospital user
+  Future<HospitalUser?> getCurrentHospitalUser() async {
+    try {
+      final isAuth = await isUserAuthenticated();
+      if (!isAuth) {
+        debugPrint(
+          'AuthService: User not authenticated, cannot get hospital user',
+        );
+        return null;
+      }
+
+      final userType = await _authStateService.getUserType();
+      if (userType != UserType.hospital) {
+        debugPrint('AuthService: User is not a hospital type');
+        return null;
+      }
+
+      final hospitalUser = await _authStateService.getStoredHospitalUser();
+      debugPrint(
+        'AuthService: Retrieved current hospital user: ${hospitalUser?.hospitalName}',
+      );
+      return hospitalUser;
+    } catch (e) {
+      debugPrint('AuthService: Error getting current hospital user: $e');
+      return null;
+    }
+  }
+
+  // Get stored user type (wrapper for AuthStateService method)
+  Future<UserType?> getStoredUserType() async {
+    try {
+      return await _authStateService.getUserType();
+    } catch (e) {
+      debugPrint('AuthService: Error getting stored user type: $e');
+      return null;
+    }
+  }
+
   // Reset password
   Future<Map<String, dynamic>> resetPassword({required String email}) async {
     try {
@@ -717,23 +755,27 @@ class AuthService {
   String _getAuthErrorMessage(String errorCode) {
     switch (errorCode) {
       case 'user-not-found':
-        return 'No user found with this email address.';
+        return 'No account found with this email address. Please check your email or create a new account.';
       case 'wrong-password':
-        return 'Incorrect password.';
+        return 'Incorrect password. Please try again or reset your password.';
       case 'email-already-in-use':
-        return 'An account already exists with this email address.';
+        return 'An account already exists with this email address. Please try logging in instead.';
       case 'weak-password':
-        return 'Password is too weak. Please choose a stronger password.';
+        return 'Password is too weak. Please use at least 8 characters with uppercase, lowercase, and numbers.';
       case 'invalid-email':
-        return 'Invalid email address format.';
+        return 'Please enter a valid email address.';
       case 'user-disabled':
-        return 'This account has been disabled.';
+        return 'This account has been disabled. Please contact support for assistance.';
       case 'too-many-requests':
-        return 'Too many failed attempts. Please try again later.';
+        return 'Too many failed attempts. Please wait a few minutes before trying again.';
       case 'operation-not-allowed':
-        return 'This operation is not allowed.';
+        return 'This operation is not currently allowed. Please try again later.';
+      case 'network-request-failed':
+        return 'Network connection error. Please check your internet connection and try again.';
+      case 'timeout':
+        return 'The request timed out. Please check your connection and try again.';
       default:
-        return 'An error occurred. Please try again.';
+        return 'An unexpected error occurred. Please check your connection and try again.';
     }
   }
 }
